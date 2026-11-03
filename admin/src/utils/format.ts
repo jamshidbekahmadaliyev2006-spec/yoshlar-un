@@ -18,7 +18,7 @@ export const nf = (n: number) => {
   return n.toLocaleString('ru-RU');
 };
 
-export const TYPES = [
+export const DEFAULT_TYPES = [
   'Sport',
   'Madaniy',
   'Ta’lim',
@@ -27,13 +27,46 @@ export const TYPES = [
   'Boshqa'
 ];
 
+export const getStoredTypes = (): string[] => {
+  try {
+    const s = localStorage.getItem('custom_event_types');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return DEFAULT_TYPES;
+};
+
+export const saveNewEventType = (name: string): string[] => {
+  const current = getStoredTypes();
+  const trimmed = name.trim();
+  if (trimmed && !current.includes(trimmed)) {
+    const updated = [...current, trimmed];
+    try {
+      localStorage.setItem('custom_event_types', JSON.stringify(updated));
+    } catch {}
+    TYPES.length = 0;
+    TYPES.push(...updated);
+    return updated;
+  }
+  return current;
+};
+
+export const TYPES: string[] = getStoredTypes();
+
 export const COL = [
   '#8b5cf6',
   '#f97316',
   '#22d3ee',
   '#22c9a0',
   '#facc15',
-  '#94a3b8'
+  '#94a3b8',
+  '#ec4899',
+  '#3b82f6',
+  '#10b981',
+  '#a855f7',
+  '#f59e0b'
 ];
 
 export const LOCS = [

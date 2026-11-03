@@ -20,7 +20,7 @@ const DESC = [
   'Yoshlar uchun ochiq muloqot va tanishuv tadbiri.'
 ];
 
-const CNT = [6, 8, 12, 9, 6, 3, 4, 9, 8, 11, 9, 6, 3, 5, 10, 8, 14, 9, 7, 4, 5, 11, 9, 10, 8, 7, 5, 18, 7, 11, 6];
+const CNT = [6, 8, 12, 9, 6, 3, 4, 9, 8, 11, 9, 6, 3, 5, 10, 8, 14, 9, 7, 4, 5, 11, 9, 10, 8, 7, 5, 18, 7, 11];
 
 const typeOf = (i: number) => {
   const r = (i * 37) % 100;
@@ -36,6 +36,9 @@ CNT.forEach((c, d) => {
     const p = POOL[t];
     const day = d + 1;
     const dateStr = `2026-11-${pad(day <= 30 ? day : 30)}`;
+    const going = 30 + ((n0 * 17) % 170);
+    const rate = 0.60 + ((n0 * 7) % 29) / 100;
+    const came = Math.round(going * rate);
     INITIAL_EVENTS.push({
       id: n0,
       t,
@@ -44,13 +47,11 @@ CNT.forEach((c, d) => {
       date: dateStr,
       time: `${pad(9 + ((k * 2 + d) % 11))}:00`,
       ages: `${15 + (n0 % 3) * 2}–${25 + (n0 % 2) * 5} yosh`,
-      going: 30 + ((n0 * 17) % 170),
+      going,
+      came,
       desc: DESC[t]
     });
   }
-});
-INITIAL_EVENTS.forEach(e => {
-  e.came = e.date <= TODAY ? Math.round(e.going * (0.55 + (e.id % 5) * 0.08)) : 0;
 });
 
 // Generate initial 12,486 users
@@ -62,7 +63,7 @@ const FL = ['Abdullayeva', 'Raxmatova', 'Qodirova', 'Raximova', 'Aliyeva', 'Kari
 const INITIAL_USERS: UserItem[] = Array.from({ length: 12486 }, (_, i) => {
   const f = i % 2;
   const k = i >> 1;
-  const baseDate = new Date(2026, 10, 2);
+  const baseDate = new Date(2026, 10, 3);
   const dd = new Date(baseDate.getTime() - Math.floor(i / 33) * 864e5);
   return {
     id: i + 1,
@@ -96,13 +97,11 @@ export const apiClient = {
   getEventById: (id: number) => localEvents.find(e => e.id === id),
   addEvent: (event: Omit<EventItem, 'id' | 'going' | 'came'>) => {
     const newId = Math.max(...localEvents.map(e => e.id), 0) + 1;
-    const initialGoing = 45;
-    const initialCame = 36;
     const newEvent: EventItem = {
       ...event,
       id: newId,
-      going: initialGoing,
-      came: initialCame
+      going: 0,
+      came: 0
     };
     localEvents.push(newEvent);
     const added = LS.g<EventItem[]>('added', []);
@@ -114,13 +113,19 @@ export const apiClient = {
   // Registrations
   getRegistrations: () => localRegs,
   toggleRegistration: (eventId: number) => {
+    const ev = localEvents.find(e => e.id === eventId);
+    let isReg = false;
     if (localRegs.includes(eventId)) {
       localRegs = localRegs.filter(id => id !== eventId);
+      if (ev && ev.going > 0) ev.going -= 1;
+      isReg = false;
     } else {
       localRegs = [...localRegs, eventId];
+      if (ev) ev.going += 1;
+      isReg = true;
     }
     LS.s('reg', localRegs);
-    return localRegs.includes(eventId);
+    return isReg;
   },
 
   // Users

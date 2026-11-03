@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '../ui/Icon';
-import { TODAY, pad, MN } from '../../utils/format';
+import { pad, MN } from '../../utils/format';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 interface DatePickerPopoverProps {
@@ -18,17 +18,13 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { selectedDate, selectedTime, selectedPreset, setDate, setTime, setPreset } = useDateFilter();
+  const { selectedDate, selectedPreset, setDate, setPreset } = useDateFilter();
 
   const [dYear, dMonth, dDay] = selectedDate.split('-').map(Number);
   const [viewYear, setViewYear] = useState(dYear || 2026);
   const [viewMonth, setViewMonth] = useState(dMonth ? dMonth - 1 : 10);
 
-  const [tHour, tMinute] = (selectedTime || '00:00').split(':');
-  const [hour, setLocalHour] = useState(tHour || '00');
-  const [minute, setLocalMinute] = useState(tMinute || '00');
-
-  // Synchronize view month/year and hour/minute when selectedDate changes externally
+  // Synchronize view month/year when selectedDate changes externally
   useEffect(() => {
     const [y, m] = selectedDate.split('-').map(Number);
     if (y && m) {
@@ -36,12 +32,6 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       setViewMonth(m - 1);
     }
   }, [selectedDate]);
-
-  useEffect(() => {
-    const [h, min] = (selectedTime || '00:00').split(':');
-    setLocalHour(h || '00');
-    setLocalMinute(min || '00');
-  }, [selectedTime]);
 
   // Display date on the pill button (DD.MM.YYYY)
   const formattedPillDate = `${pad(dDay)}.${pad(dMonth)}.${dYear}`;
@@ -100,7 +90,7 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
 
   const handleSelectDay = (cell: CalendarCell) => {
     const targetDate = `${cell.year}-${pad(cell.month + 1)}-${pad(cell.day)}`;
-    setDate(targetDate, `${hour}:${minute}`, 'custom');
+    setDate(targetDate, '00:00', 'custom');
     setViewMonth(cell.month);
     setViewYear(cell.year);
     if (onDateChange) {
@@ -130,22 +120,9 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
     setPreset(preset);
   };
 
-  const handleSelectHour = (h: string) => {
-    setLocalHour(h);
-    setTime(`${h}:${minute}`);
-  };
-
-  const handleSelectMinute = (m: string) => {
-    setLocalMinute(m);
-    setTime(`${hour}:${m}`);
-  };
-
-  const hoursList = Array.from({ length: 24 }, (_, i) => pad(i));
-  const minutesList = Array.from({ length: 60 }, (_, i) => pad(i));
-
   return (
     <div className="datepicker-wrapper" ref={containerRef}>
-      {/* 1. Triger Tugmasi (Rasm 1 dagi: 02.11.2026 + Kalendar belgisi) */}
+      {/* 1. Triger Tugmasi */}
       <button
         type="button"
         className={`datepicker-pill-btn ${isOpen ? 'active' : ''}`}
@@ -157,7 +134,7 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
         <Icon name="cal" className="datepicker-cal-icon" />
       </button>
 
-      {/* 2. Ochiluvchi Katta Kalendar Modali (Rasm 1 ga 1-ga-1 mos) */}
+      {/* 2. Ochiluvchi Kalendar Modali */}
       {isOpen && (
         <div className="datepicker-card-popover">
           {/* A. Yuqori Preset Tugmalari */}
@@ -199,19 +176,19 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
             </button>
           </div>
 
-          {/* B. Sana diapazoni kiritish maydonlari */}
+          {/* B. Sana diapazoni kiritish maydonlari (vaqtsiz, toza sana) */}
           <div className="dp-range-row">
             <div className="dp-input-group">
               <span className="dp-input-label">Sana (dan)</span>
               <div className="dp-input-box">
-                {formattedPillDate} | {hour}:{minute}
+                {formattedPillDate}
               </div>
             </div>
             <span className="dp-range-sep">-</span>
             <div className="dp-input-group">
               <span className="dp-input-label">Sana (gacha)</span>
               <div className="dp-input-box">
-                {formattedPillDate} | 23:59
+                {formattedPillDate}
               </div>
             </div>
             <button
@@ -223,9 +200,8 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
             </button>
           </div>
 
-          {/* C. Asosiy Qism: Chapda Kalendar, O'ngda Vaqt */}
+          {/* C. Asosiy Qism: Kalendar */}
           <div className="dp-main-content">
-            {/* Chap tomondagi oy kalendari */}
             <div className="dp-calendar-pane">
               {/* Oy va yil navigatsiyasi */}
               <div className="dp-month-nav">
@@ -302,50 +278,6 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
                     </button>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* O'ng tomondagi vaqt tanlagich (Vaqt) */}
-            <div className="dp-time-pane">
-              <div className="dp-time-header">
-                <Icon name="clock" className="dp-time-icon" />
-                <span>Vaqt</span>
-              </div>
-
-              <div className="dp-time-columns">
-                {/* Soatlar ustuni */}
-                <div className="dp-time-col">
-                  <span className="dp-time-sub">SOAT</span>
-                  <div className="dp-time-list">
-                    {hoursList.map(h => (
-                      <button
-                        type="button"
-                        key={h}
-                        className={`dp-time-item ${h === hour ? 'active' : ''}`}
-                        onClick={() => handleSelectHour(h)}
-                      >
-                        {h}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Daqiqalar ustuni */}
-                <div className="dp-time-col">
-                  <span className="dp-time-sub">DAQIQA</span>
-                  <div className="dp-time-list">
-                    {minutesList.map(m => (
-                      <button
-                        type="button"
-                        key={m}
-                        className={`dp-time-item ${m === minute ? 'active' : ''}`}
-                        onClick={() => handleSelectMinute(m)}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

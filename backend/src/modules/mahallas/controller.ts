@@ -24,7 +24,7 @@ export class MahallasController {
 
   static async getMahallaStats(req: Request, res: Response, next: NextFunction) {
     try {
-      const sortBy = (req.query.sortBy as 'c' | 'p' | 'k') || 'c';
+      const sortBy = (req.query.sortBy as 'r' | 'k' | 'avg') || 'r';
       const data = await MahallasService.getMahallaStats(sortBy);
       return successResponse(res, data);
     } catch (err: any) {

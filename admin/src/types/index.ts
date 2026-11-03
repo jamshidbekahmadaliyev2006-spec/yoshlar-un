@@ -39,10 +39,11 @@ export interface EventItem {
 
 export interface MahallaStat {
   n: string;
-  c: number; // came
   k: number; // events count
-  r?: number; // registered
-  p?: number; // percentage
+  r: number; // registered youth count
+  avg?: number; // average registered per event
+  c?: number;
+  p?: number;
   i?: number;
 }
 

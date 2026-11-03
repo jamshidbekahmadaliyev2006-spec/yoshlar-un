@@ -35,7 +35,7 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="sm">Jami foydalanuvchilar</div>
             <div className="v">{nf(overview.totalUsers)}</div>
             <div className="up">
-              ↑ 12% <span className="sm" style={{ fontWeight: 400 }}>o‘tgan oyga nisbatan</span>
+              ↑ {overview.usersGrowthPct}% <span className="sm" style={{ fontWeight: 400 }}>o‘tgan oyga nisbatan</span>
             </div>
           </div>
         </Card>
@@ -48,7 +48,7 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="sm">Jami tadbirlar</div>
             <div className="v">{nf(overview.totalEvents)}</div>
             <div className="up">
-              ↑ 18% <span className="sm" style={{ fontWeight: 400 }}>o‘tgan oyga nisbatan</span>
+              ↑ 14% <span className="sm" style={{ fontWeight: 400 }}>o‘tgan oyga nisbatan</span>
             </div>
           </div>
         </Card>
@@ -58,10 +58,10 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
             <Icon name="user" />
           </div>
           <div>
-            <div className="sm">Faol ishtirokchilar</div>
+            <div className="sm">Faol foydalanuvchilar</div>
             <div className="v">{nf(overview.activeParticipants)}</div>
             <div className="up">
-              ↑ 22% <span className="sm" style={{ fontWeight: 400 }}>o‘tgan oyga nisbatan</span>
+              Faollik darajasi: {overview.activePct}%
             </div>
           </div>
         </Card>
@@ -85,18 +85,14 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       {/* 3 Ustunli Vidjetlar Bo'limi */}
       <section className="c3">
-        {/* 1. Haftalik Davomat Ustunlari */}
+        {/* 1. Haftalik Ro'yxatdan O'tganlar Ustunlari */}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-            <h2 className="h">Ro‘yxatdan o‘tganlar va haqiqatda kelganlar</h2>
+            <h2 className="h">Haftalar bo‘yicha ro‘yxatdan o‘tgan yoshlar</h2>
             <div className="sm lgd">
               <span>
-                <i className="dot" style={{ background: '#8b5cf6' }} />
-                Ro‘yxatdan o‘tgan
-              </span>
-              <span>
-                <i className="dot" style={{ background: '#22c9a0' }} />
-                Kelgan
+                <i className="dot" style={{ background: 'var(--pri)' }} />
+                Ro‘yxatdan o‘tganlar
               </span>
             </div>
           </div>

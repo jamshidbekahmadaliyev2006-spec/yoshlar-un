@@ -1,20 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
+import { Icon } from '../../components/ui/Icon';
 import { MapView } from '../../components/map/MapView';
 import { MahallaRanking } from '../../components/charts/MahallaRanking';
 import { mahallasApi } from '../../api/mahallas';
 import { apiClient } from '../../api/client';
-import { LOCS, MH, nf, fd } from '../../utils/format';
+import { LOCS, MH, nf } from '../../utils/format';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 interface MahallaPageProps {
   onNavigate?: (route: string) => void;
 }
 
+const SORT_OPTIONS: { value: 'r' | 'k' | 'avg'; label: string }[] = [
+  { value: 'r', label: 'Ro‘yxatdan o‘tgan yoshlar soni bo‘yicha' },
+  { value: 'k', label: 'Tadbirlar soni bo‘yicha' },
+  { value: 'avg', label: 'O‘rtacha qamrov bo‘yicha' }
+];
+
 export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
   const { selectedDate } = useDateFilter();
   const [selectedPin, setSelectedPin] = useState(-1);
-  const [sortBy, setSortBy] = useState<'c' | 'p' | 'k'>('c');
+  const [sortBy, setSortBy] = useState<'r' | 'k' | 'avg'>('r');
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+    if (isSortOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSortOpen]);
+
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || SORT_OPTIONS[0].label;
 
   const mahallas = mahallasApi.getStats(sortBy, selectedDate);
   const events = apiClient.getEvents();
@@ -22,14 +45,8 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
   const isAll = selectedPin < 0 || selectedPin >= LOCS.length;
   const selectedMahalla = !isAll ? mahallas.find(m => m.i === selectedPin) : null;
   const totalEventsCount = events.length;
-  const totalParticipants = mahallas.reduce((sum, m) => sum + m.c, 0);
-  const avgAttendance = Math.round(
-    mahallas.reduce((sum, m) => sum + m.p, 0) / (mahallas.length || 1)
-  );
-
-  const displayEvents = !isAll
-    ? events.filter(e => e.loc === selectedPin).sort((a, b) => b.date.localeCompare(a.date))
-    : events.slice().sort((a, b) => b.date.localeCompare(a.date));
+  const totalRegistered = mahallas.reduce((sum, m) => sum + m.r, 0);
+  const avgPerEvent = totalEventsCount > 0 ? Math.round(totalRegistered / totalEventsCount) : 0;
 
   return (
     <div
@@ -51,7 +68,7 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
         >
           <div style={{ marginBottom: '14px' }}>
             <h2 className="h" style={{ margin: 0 }}>Mahallalar bo‘yicha faollik</h2>
-            <div className="sm" style={{ marginTop: '2px' }}>Tadbirlar va ishtirokchilar qamrovi</div>
+            <div className="sm" style={{ marginTop: '2px' }}>Tadbirlar va ro‘yxatdan o‘tgan yoshlar qamrovi</div>
           </div>
 
           <MahallaRanking
@@ -115,43 +132,17 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
                 </b>
               </div>
               <div>
-                <div className="sm">Qatnashganlar</div>
+                <div className="sm">Ro‘yxatdan o‘tganlar</div>
                 <b style={{ fontSize: '16px', color: 'var(--tx)' }}>
-                  {nf(!isAll ? (selectedMahalla?.c || 0) : totalParticipants)}
+                  {nf(!isAll ? (selectedMahalla?.r || 0) : totalRegistered)} nafar
                 </b>
               </div>
               <div>
-                <div className="sm">{!isAll ? 'Davomat' : 'O‘rtacha davomat'}</div>
-                <b style={{ fontSize: '16px', color: '#00bcd4' }}>
-                  {!isAll ? (selectedMahalla?.p || 0) : avgAttendance}%
+                <div className="sm">O‘rtacha qamrov</div>
+                <b style={{ fontSize: '16px', color: 'var(--pri)' }}>
+                  {!isAll ? (selectedMahalla?.avg || 0) : avgPerEvent} nafar / tadbir
                 </b>
               </div>
-            </div>
-
-            {/* Mahalladagi Tadbirlar Ro'yxati */}
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
-              <div className="sm" style={{ fontWeight: 600, marginBottom: '6px' }}>
-                {!isAll
-                  ? `Ushbu mahallaga biriktirilgan tadbirlar (${displayEvents.length}):`
-                  : `Yunusobod tumanidagi so‘nggi tadbirlar (${displayEvents.length}):`}
-              </div>
-              {displayEvents.length === 0 ? (
-                <div className="sm" style={{ opacity: 0.7 }}>Hozircha tadbirlar yo‘q</div>
-              ) : (
-                displayEvents.slice(0, 3).map(e => (
-                  <a
-                    key={e.id}
-                    className="ml"
-                    href={`#tadbir-${e.id}`}
-                    onClick={ev => {
-                      ev.preventDefault();
-                      if (onNavigate) onNavigate(`tadbir-${e.id}`);
-                    }}
-                  >
-                    {fd(e.date)} · {e.time} — {e.title} {isAll && <span className="sm" style={{ opacity: 0.75 }}>({MH[e.loc] || 'Yunusobod'})</span>}
-                  </a>
-                ))
-              )}
             </div>
           </div>
         </Card>
@@ -163,22 +154,43 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
           <div>
             <h2 className="h" style={{ margin: 0 }}>Batafsil ko‘rsatkichlar jadvali</h2>
             <div className="sm" style={{ marginTop: '2px' }}>
-              Mahallalar kesimida tadbirlar soni, aholi qamrovi va ishtirok darajasi
+              Mahallalar kesimida tadbirlar soni va ro‘yxatdan o‘tgan yoshlar qamrovi
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '13px', color: 'var(--mut)', fontWeight: 500 }}>Saralash:</span>
-            <select
-              className="tb-filter-select"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as 'c' | 'p' | 'k')}
-              aria-label="Saralash"
-            >
-              <option value="c">Qatnashganlar soni bo‘yicha</option>
-              <option value="k">Tadbirlar soni bo‘yicha</option>
-              <option value="p">Kelish foizi bo‘yicha</option>
-            </select>
+            <div className="custom-select-wrap" ref={sortRef}>
+              <button
+                type="button"
+                className="custom-select-btn"
+                onClick={() => setIsSortOpen(prev => !prev)}
+                aria-expanded={isSortOpen}
+              >
+                <span>{currentSortLabel}</span>
+              </button>
+
+              {isSortOpen && (
+                <div className="custom-select-menu" role="listbox">
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      className={`custom-select-item ${sortBy === opt.value ? 'active' : ''}`}
+                      onClick={() => {
+                        setSortBy(opt.value);
+                        setIsSortOpen(false);
+                      }}
+                      role="option"
+                      aria-selected={sortBy === opt.value}
+                    >
+                      <span>{opt.label}</span>
+                      {sortBy === opt.value && <Icon name="check" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -190,32 +202,30 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
                 <th>Mahalla nomi</th>
                 <th>Lokatsiya manzili</th>
                 <th>Tadbirlar soni</th>
-                <th>Ro‘yxatdan o‘tgan</th>
-                <th>Kelganlar</th>
-                <th>Kelish darajasi</th>
+                <th>Ro‘yxatdan o‘tgan yoshlar</th>
+                <th>O‘rtacha qamrov</th>
                 <th style={{ textAlign: 'right' }}>Amal</th>
               </tr>
             </thead>
             <tbody>
               {mahallas.map((x, i) => {
                 const isSelected = selectedPin === x.i;
-                const pillCls = x.p >= 75 ? 's0' : x.p >= 65 ? 's1' : 's2';
                 return (
                   <tr
                     key={x.n}
                     style={{
                       cursor: 'pointer',
-                      background: isSelected ? 'rgba(0, 188, 212, 0.08)' : 'transparent',
+                      background: isSelected ? 'var(--soft)' : 'transparent',
                       transition: 'background 0.2s'
                     }}
                     onClick={() => setSelectedPin(isSelected ? -1 : x.i)}
                   >
                     <td>
-                      <b style={{ color: isSelected ? '#00bcd4' : 'inherit' }}>{i + 1}</b>
+                      <b style={{ color: isSelected ? 'var(--pri)' : 'inherit' }}>{i + 1}</b>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {isSelected && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00bcd4' }} />}
+                        {isSelected && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--pri)' }} />}
                         <b>{x.n} mahallasi</b>
                       </div>
                     </td>
@@ -223,15 +233,14 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
                       <span className="sm">{LOCS[x.i].n}</span>
                     </td>
                     <td>
-                      <b style={{ color: '#00bcd4' }}>{x.k} ta tadbir</b>
-                    </td>
-                    <td>{nf(x.r)} kishi</td>
-                    <td>
-                      <b>{nf(x.c)} kishi</b>
+                      <b style={{ color: 'var(--pri)' }}>{x.k} ta tadbir</b>
                     </td>
                     <td>
-                      <span className={`pill ${pillCls}`} style={{ cursor: 'default' }}>
-                        {x.p}%
+                      <b>{nf(x.r)} nafar</b>
+                    </td>
+                    <td>
+                      <span className="pill s0" style={{ cursor: 'default' }}>
+                        ~{x.avg} nafar / tadbir
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>

@@ -10,8 +10,8 @@ interface MahallaRankingProps {
 
 export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onSelectMahalla }) => {
   const { selectedDate } = useDateFilter();
-  const mahallas = mahallasApi.getStats('c', selectedDate);
-  const maxC = Math.max(...mahallas.map(m => m.c), 1);
+  const mahallas = mahallasApi.getStats('r', selectedDate);
+  const maxR = Math.max(...mahallas.map(m => m.r), 1);
 
   return (
     <div
@@ -31,8 +31,8 @@ export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onS
                 marginBottom: '10px',
                 padding: '6px 10px',
                 borderRadius: '10px',
-                background: isSelected ? 'rgba(0, 188, 212, 0.12)' : 'transparent',
-                border: isSelected ? '1px solid #00bcd4' : '1px solid transparent',
+                background: isSelected ? 'var(--soft)' : 'transparent',
+                border: isSelected ? '1px solid var(--pri)' : '1px solid transparent',
                 cursor: onSelectMahalla ? 'pointer' : 'default',
                 transition: 'all 0.2s ease'
               }}
@@ -45,17 +45,17 @@ export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onS
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', marginBottom: '4px' }}>
                 <span>
-                  <b style={{ color: isSelected ? '#00bcd4' : 'inherit' }}>{i + 1}.</b> {x.n} mahallasi
+                  <b style={{ color: isSelected ? 'var(--pri)' : 'inherit' }}>{i + 1}.</b> {x.n} mahallasi
                 </span>
                 <span className="sm">
-                  <b>{x.k} ta tadbir</b> · {nf(x.c)} kishi
+                  <b>{x.k} ta tadbir</b> · {nf(x.r)} nafar yozilgan
                 </span>
               </div>
-              <div className="bar" role="img" aria-label={`${x.n}: ${x.c} kishi qatnashgan`}>
+              <div className="bar" role="img" aria-label={`${x.n}: ${x.r} nafar yoshlar ro‘yxatdan o‘tgan`}>
                 <i
                   style={{
-                    width: `${(x.c / maxC) * 100}%`,
-                    background: isSelected ? '#00bcd4' : i < 2 ? '#22c9a0' : i >= mahallas.length - 2 ? '#f59e0b' : '#8b5cf6',
+                    width: `${(x.r / maxR) * 100}%`,
+                    background: isSelected ? 'var(--pri)' : i < 2 ? '#22c9a0' : i >= mahallas.length - 2 ? '#f59e0b' : '#8b5cf6',
                     animationDelay: `${i * 0.08}s`
                   }}
                 />
@@ -65,9 +65,8 @@ export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onS
         })}
       </ol>
       <div className="sm" style={{ marginTop: '8px' }}>
-        Yashil — eng faol, to‘q sariq — e’tibor talab qiladi. Yangi tadbir qo‘shilganda mahalla reytingi avtomatik oshadi.
+        Mahallalar reytingi: Yangi tadbirlar va ro‘yxatdan o‘tgan yoshlar soni real vaqt rejimida hisoblab boriladi.
       </div>
     </div>
   );
 };
-

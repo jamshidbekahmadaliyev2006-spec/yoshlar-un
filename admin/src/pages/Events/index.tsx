@@ -86,7 +86,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
       <div className="sm" style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span>{events.length} ta tadbir topildi</span>
         {filterByDate && (
-          <span style={{ color: '#00bcd4', fontWeight: 600 }}>
+          <span style={{ color: 'var(--pri)', fontWeight: 600 }}>
             · {fd(selectedDate)} sanasi bo‘yicha
           </span>
         )}
@@ -96,7 +96,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
       <div className="eg">
         {visibleEvents.map((e, i) => {
           const isReg = registered.includes(e.id);
-          const totalGoing = e.going + (isReg ? 1 : 0);
+          const totalGoing = e.going;
           return (
             <a
               key={e.id}

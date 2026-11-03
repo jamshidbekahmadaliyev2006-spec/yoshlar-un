@@ -3,6 +3,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 import { AppRouter } from './router';
 import { Toast } from './components/ui/Toast';
+import { AIChatWidget } from './components/ai/AIChatWidget';
 
 export const App: React.FC = () => {
   const [route, setRoute] = useState<string>(() => {
@@ -52,6 +53,7 @@ export const App: React.FC = () => {
       </div>
 
       <Toast />
+      <AIChatWidget />
     </>
   );
 };

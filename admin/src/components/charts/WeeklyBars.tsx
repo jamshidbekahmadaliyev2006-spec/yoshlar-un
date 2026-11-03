@@ -5,7 +5,7 @@ import { useDateFilter } from '../../store/dateFilterStore';
 
 export const WeeklyBars: React.FC = () => {
   const { selectedDate } = useDateFilter();
-  const { data, percent } = statsApi.getWeeklyBars(selectedDate);
+  const { data, totalRegistered } = statsApi.getWeeklyBars(selectedDate);
 
   const maxVal = Math.max(...data.map(x => x.r), 1);
   const st = Math.ceil(maxVal / 4 / 500) * 500;
@@ -17,7 +17,7 @@ export const WeeklyBars: React.FC = () => {
     return (
       <g key={k}>
         <path className="gl" d={`M50 ${y}H540`} />
-        <text className="lt" x="44" y={y + 4} text-anchor="end">
+        <text className="lt" x="44" y={y + 4} textAnchor="end">
           {nf(k * st)}
         </text>
       </g>
@@ -30,58 +30,52 @@ export const WeeklyBars: React.FC = () => {
         viewBox="0 0 560 232"
         width="100%"
         role="img"
-        aria-label="Haftalar bo‘yicha ro‘yxatdan o‘tganlar va haqiqatda kelganlar soni"
+        aria-label="Haftalar bo‘yicha ro‘yxatdan o‘tgan yoshlar soni"
       >
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--bar-top, #4f8bf9)" />
+            <stop offset="100%" stopColor="var(--bar-bot, #2563eb)" />
+          </linearGradient>
+        </defs>
         {gridLines}
         {data.map((x, i) => {
           const cx = 50 + i * 122.5 + 61;
-          const p = x.r ? Math.round((x.c / x.r) * 100) : 0;
+          const barWidth = 46;
+          const barHeight = Math.max(4, 200 - getY(x.r));
           return (
             <g key={i}>
               <rect
                 className="vb"
                 style={{ animationDelay: `${i * 0.12}s` }}
-                x={cx - 40}
+                x={cx - barWidth / 2}
                 y={getY(x.r)}
-                width="36"
-                height={200 - getY(x.r)}
-                rx="4"
-                fill="#8b5cf6"
+                width={barWidth}
+                height={barHeight}
+                rx="6"
+                fill="url(#barGrad)"
               >
-                <title>{`${x.l}: ${nf(x.r)} kishi ro‘yxatdan o‘tgan`}</title>
-              </rect>
-              <rect
-                className="vb"
-                style={{ animationDelay: `${i * 0.12 + 0.06}s` }}
-                x={cx + 4}
-                y={getY(x.c)}
-                width="36"
-                height={200 - getY(x.c)}
-                rx="4"
-                fill="#22c9a0"
-              >
-                <title>{`${x.l}: ${nf(x.c)} kishi kelgan`}</title>
+                <title>{`${x.l}: ${nf(x.r)} nafar yoshlar ro‘yxatdan o‘tgan`}</title>
               </rect>
               <text
                 className="lt"
                 x={cx}
-                y={getY(x.r) - 6}
+                y={getY(x.r) - 8}
                 textAnchor="middle"
-                style={{ fontWeight: 600, fill: 'var(--tx)' }}
+                style={{ fontWeight: 700, fill: 'var(--tx)', fontSize: '13px' }}
               >
-                {p}%
+                {nf(x.r)}
               </text>
-              <text className="lt" x={cx} y="220" textAnchor="middle">
+              <text className="lt" x={cx} y="220" textAnchor="middle" style={{ fontSize: '12px' }}>
                 {x.l}
               </text>
             </g>
           );
         })}
       </svg>
-      <div className="sm" style={{ marginTop: '6px' }}>
-        Oxirgi 4 hafta: ro‘yxatdan o‘tganlarning <b>{percent}%</b> i haqiqatda kelgan. Ustun ustidagi foiz — shu haftadagi kelish ko‘rsatkichi.
+      <div className="sm" style={{ marginTop: '8px' }}>
+        Oxirgi 4 hafta davomida jami <b>{nf(totalRegistered)}</b> nafar yoshlar tadbirlarga qatnashish uchun ro‘yxatdan o‘tgan.
       </div>
     </div>
   );
 };
-

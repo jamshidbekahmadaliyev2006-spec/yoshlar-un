@@ -94,7 +94,7 @@ export const EventDetailsPage: React.FC<EventDetailsProps> = ({ eventId, onNavig
     );
   };
 
-  const totalGoing = event.going + (isRegistered ? 1 : 0);
+  const totalGoing = event.going;
 
   return (
     <div>

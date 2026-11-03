@@ -10,6 +10,7 @@ export const statsApi = {
     const prevDate = new Date(y, m - 1, d - 1);
     const yesterdayStr = `${prevDate.getFullYear()}-${pad(prevDate.getMonth() + 1)}-${pad(prevDate.getDate())}`;
 
+    // Bugungi va kechagi kun tadbirlari soni
     const todayEvents = events.filter(e => e.date === selectedDate).length;
     const yesterdayEvents = events.filter(e => e.date === yesterdayStr).length;
 
@@ -20,14 +21,34 @@ export const statsApi = {
       diffPct = 100;
     }
 
-    const dateEvents = events.filter(e => e.date === selectedDate);
-    const participantsOnDate = dateEvents.reduce((acc, e) => acc + (e.came || Math.round(e.going * 0.7)), 0);
-    const activeParticipants = participantsOnDate > 0 ? 8200 + participantsOnDate : 8742;
+    // Real faol foydalanuvchilar (s === 0)
+    const activeParticipants = users.filter(u => u.s === 0).length;
+    const activePct = users.length > 0 ? Math.round((activeParticipants / users.length) * 100) : 0;
+
+    // Real o'tgan oyga nisbatan o'sish foizi (oxirgi 30 kunlik registratsiyalar)
+    const oneMonthAgo = new Date(y, m - 2, d);
+    const usersOneMonthAgo = users.filter(u => {
+      const [ud, um, uy] = u.d.split('.').map(Number);
+      return new Date(uy, um - 1, ud) <= oneMonthAgo;
+    }).length;
+    const usersGrowthPct = usersOneMonthAgo > 0
+      ? Math.round(((users.length - usersOneMonthAgo) / usersOneMonthAgo) * 100)
+      : 0;
+
+    // Tanlangan sanagacha o'tkazilgan tadbirlar ulushi
+    const eventsToDate = events.filter(e => e.date <= selectedDate).length;
+    const eventsProgressPct = events.length > 0
+      ? Math.round((eventsToDate / events.length) * 100)
+      : 0;
 
     return {
       totalUsers: users.length,
-      totalEvents: events.filter(e => e.date <= selectedDate).length || events.length,
+      usersGrowthPct,
+      totalEvents: events.length,
+      eventsToDate,
+      eventsProgressPct,
       activeParticipants,
+      activePct,
       todayEvents,
       yesterdayEvents,
       diffPct
@@ -49,30 +70,21 @@ export const statsApi = {
 
     const data = weeks.map(([a, b]) => {
       let r = 0;
-      let c = 0;
       events.forEach(e => {
         const d = +e.date.slice(8);
         if (e.date.slice(0, 7) === monthPrefix && d >= a && d <= b) {
-          r += e.going;
-          c += e.came || Math.round(e.going * 0.75);
+          r += e.going || 0;
         }
       });
-      if (r === 0) {
-        r = 1450 + a * 60;
-        c = Math.round(r * 0.76);
-      }
       return {
         l: `${a}–${b} ${monthName}`,
-        r,
-        c
+        r
       };
     });
 
-    const rt = data.reduce((acc, x) => acc + x.r, 0);
-    const ct = data.reduce((acc, x) => acc + x.c, 0);
-    const percent = rt ? Math.round((ct / rt) * 100) : 0;
+    const totalRegistered = data.reduce((acc, x) => acc + x.r, 0);
 
-    return { data, totalRegistered: rt, totalAttended: ct, percent };
+    return { data, totalRegistered };
   },
 
   getDonutData: (selectedDate = TODAY) => {
@@ -80,18 +92,27 @@ export const statsApi = {
     const monthPrefix = selectedDate.slice(0, 7);
     const monthEvents = events.filter(e => e.date.slice(0, 7) === monthPrefix);
     const pool = monthEvents.length > 0 ? monthEvents : events;
-    const counts = TYPES.map((_, i) => pool.filter(e => e.t === i).length);
     const total = pool.length || 1;
 
-    return {
-      total: pool.length,
-      items: counts.map((count, i) => ({
-        name: TYPES[i],
+    const items = TYPES.map((name, i) => {
+      const count = pool.filter(e => e.t === i).length;
+      return {
+        name,
         count,
         color: COL[i],
         percent: Math.round((count / total) * 100)
-      }))
+      };
+    });
+
+    // Foizlar yig'indisi aniq 100% bo'lishini ta'minlash
+    const pSum = items.reduce((s, it) => s + it.percent, 0);
+    if (pSum !== 100 && items.length > 0) {
+      items[0].percent += (100 - pSum);
+    }
+
+    return {
+      total: pool.length,
+      items
     };
   }
 };
-

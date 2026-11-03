@@ -12,7 +12,8 @@ export const UsersPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [, setRerender] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked' | 'new'>('all');
+  const [rerender, setRerender] = useState(0);
 
   // Tahrirlash modali holati
   const [editUser, setEditUser] = useState<UserItem | null>(null);
@@ -23,22 +24,30 @@ export const UsersPage: React.FC = () => {
   const [allowEvents, setAllowEvents] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(true);
 
+  // Status hisoblagichlari (barcha foydalanuvchilar bo'yicha)
+  const allUsers = usersApi.getAll();
+  const activeCount = allUsers.filter(u => u.s === 0).length;
+  const blockedCount = allUsers.filter(u => u.s === 2).length;
+  const dateFormatted = selectedDate.split('-').reverse().join('.');
+  const dateNewCount = allUsers.filter(u => u.d === dateFormatted).length;
+
   const filteredUsers = useMemo(() => {
-    return usersApi.getAll(query);
-  }, [query]);
+    let list = usersApi.getAll(query);
+    if (statusFilter === 'active') {
+      list = list.filter(u => u.s === 0);
+    } else if (statusFilter === 'blocked') {
+      list = list.filter(u => u.s === 2);
+    } else if (statusFilter === 'new') {
+      list = list.filter(u => u.d === dateFormatted);
+    }
+    return list;
+  }, [query, statusFilter, dateFormatted, rerender]);
 
   const total = filteredUsers.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, pageCount);
   const startIndex = (currentPage - 1) * pageSize;
   const pageRows = filteredUsers.slice(startIndex, startIndex + pageSize);
-
-  // Status counters across all users
-  const allUsers = useMemo(() => usersApi.getAll(), []);
-  const activeCount = allUsers.filter(u => u.s === 0).length;
-  const blockedCount = allUsers.filter(u => u.s === 2).length;
-  const dateFormatted = selectedDate.split('-').reverse().join('.');
-  const dateNewCount = allUsers.filter(u => u.d === dateFormatted).length || (selectedDate === TODAY ? 18 : Math.max(6, (parseInt(selectedDate.slice(-2), 10) * 5) % 24));
 
   const handleToggleStatus = (id: number, name: string) => {
     const newStatus = usersApi.toggleStatus(id);
@@ -146,7 +155,18 @@ export const UsersPage: React.FC = () => {
 
       {/* 4 Mini Statistika */}
       <section className="sg" id="us">
-        <Card className="sc" style={{ alignItems: 'center' }}>
+        <Card
+          className="sc"
+          style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            border: statusFilter === 'all' ? '2px solid var(--pri)' : '1px solid transparent'
+          }}
+          onClick={() => {
+            setStatusFilter('all');
+            setPage(1);
+          }}
+        >
           <div className="ico" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d3df0)', width: 42, height: 42 }}>
             <Icon name="users" />
           </div>
@@ -156,7 +176,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="sc" style={{ alignItems: 'center' }}>
+        <Card
+          className="sc"
+          style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            border: statusFilter === 'active' ? '2px solid #22c9a0' : '1px solid transparent'
+          }}
+          onClick={() => {
+            setStatusFilter(prev => (prev === 'active' ? 'all' : 'active'));
+            setPage(1);
+          }}
+        >
           <div className="ico" style={{ background: 'linear-gradient(135deg,#22c9a0,#0e9f8f)', width: 42, height: 42 }}>
             <Icon name="users" />
           </div>
@@ -166,7 +197,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="sc" style={{ alignItems: 'center' }}>
+        <Card
+          className="sc"
+          style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            border: statusFilter === 'blocked' ? '2px solid #d92d27' : '1px solid transparent'
+          }}
+          onClick={() => {
+            setStatusFilter(prev => (prev === 'blocked' ? 'all' : 'blocked'));
+            setPage(1);
+          }}
+        >
           <div className="ico" style={{ background: '#d92d27', width: 42, height: 42 }}>
             <Icon name="users" />
           </div>
@@ -176,7 +218,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="sc" style={{ alignItems: 'center' }}>
+        <Card
+          className="sc"
+          style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            border: statusFilter === 'new' ? '2px solid #e07b00' : '1px solid transparent'
+          }}
+          onClick={() => {
+            setStatusFilter(prev => (prev === 'new' ? 'all' : 'new'));
+            setPage(1);
+          }}
+        >
           <div className="ico" style={{ background: '#e07b00', width: 42, height: 42 }}>
             <Icon name="users" />
           </div>
@@ -296,7 +349,7 @@ export const UsersPage: React.FC = () => {
             {/* Modal Sarlavhasi */}
             <div className="modal-header-row">
               <div className="modal-header-left">
-                <div className="modal-cyan-pill" />
+                <div className="modal-accent-pill" />
                 <div>
                   <div className="modal-subtag">Tahrirlash</div>
                   <h3 className="modal-title-text">Foydalanuvchini tahrirlash</h3>
@@ -435,7 +488,7 @@ export const UsersPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                className="btn-save-cyan"
+                className="btn-save-primary"
                 onClick={handleSaveEdit}
               >
                 Saqlash

@@ -56,6 +56,8 @@
     --mapbg: #08204a;
     --mappk: #0c2b62;
     --maprd: #153e87;
+    --bar-top: #60a5fa;
+    --bar-bot: #2563eb;
   }
 }
 
@@ -86,11 +88,13 @@
   --mapbg: #08204a;
   --mappk: #0c2b62;
   --maprd: #153e87;
+  --bar-top: #60a5fa;
+  --bar-bot: #2563eb;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --grad: #1763ee;
+  --grad: linear-gradient(180deg, #2b74f6 0%, #155bd8 100%);
   --bgi: none;
   --cb: #e2eaf4;
   --cs: 0 2px 8px rgba(20, 50, 110, 0.06);
@@ -108,11 +112,13 @@
   --inp: #ffffff;
   --ibd: #cbd8ea;
   --soft: #f0f4fa;
-  --pri: #1763ee;
-  --prit: #1557d0;
+  --pri: #1d65ec;
+  --prit: #1452c5;
   --ok: #0b6b3a;
   --okb: #dff5e8;
   --bad: #b3261e;
   --badb: #fde3e1;
+  --bar-top: #4f8bf9;
+  --bar-bot: #2563eb;
 }
 

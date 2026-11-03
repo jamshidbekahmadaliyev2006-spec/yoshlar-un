@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { MapView } from '../../components/map/MapView';
 import { eventsApi } from '../../api/events';
-import { TYPES, LOCS, MH, TODAY } from '../../utils/format';
+import { getStoredTypes, saveNewEventType, COL, LOCS, MH, TODAY } from '../../utils/format';
 import { showToast } from '../../components/ui/Toast';
 
 interface EventFormProps {
@@ -12,7 +12,13 @@ interface EventFormProps {
 
 export const EventFormPage: React.FC<EventFormProps> = ({ onNavigate }) => {
   const [title, setTitle] = useState('');
+  const [typesList, setTypesList] = useState<string[]>(() => getStoredTypes());
   const [type, setType] = useState('0');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isAddingNewType, setIsAddingNewType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const typeDropdownRef = useRef<HTMLDivElement>(null);
+
   const [locIndex, setLocIndex] = useState(() => {
     const hash = window.location.hash;
     const match = hash.match(/loc=(\d+)/);
@@ -24,6 +30,35 @@ export const EventFormPage: React.FC<EventFormProps> = ({ onNavigate }) => {
   const [imgData, setImgData] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) {
+        setIsTypeDropdownOpen(false);
+        setIsAddingNewType(false);
+      }
+    };
+    if (isTypeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isTypeDropdownOpen]);
+
+  const handleAddNewType = () => {
+    const trimmed = newTypeName.trim();
+    if (!trimmed) {
+      showToast('Tadbir turi nomini kiriting');
+      return;
+    }
+    const updated = saveNewEventType(trimmed);
+    setTypesList(updated);
+    const newIdx = updated.indexOf(trimmed);
+    setType(String(newIdx >= 0 ? newIdx : updated.length - 1));
+    setNewTypeName('');
+    setIsAddingNewType(false);
+    setIsTypeDropdownOpen(false);
+    showToast(`Yangi tadbir turi qo‘shildi: ${trimmed}`);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,18 +133,127 @@ export const EventFormPage: React.FC<EventFormProps> = ({ onNavigate }) => {
               <label className="lb" htmlFor="at">
                 Tadbir turi <span className="rq">*</span>
               </label>
-              <select
-                className="in"
-                id="at"
-                value={type}
-                onChange={e => setType(e.target.value)}
-              >
-                {TYPES.map((t, i) => (
-                  <option key={t} value={i}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <div className="category-select-wrap" ref={typeDropdownRef}>
+                <button
+                  type="button"
+                  id="at"
+                  className="category-select-trigger"
+                  onClick={() => setIsTypeDropdownOpen(prev => !prev)}
+                  aria-expanded={isTypeDropdownOpen}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <i
+                      className="dot"
+                      style={{
+                        background: COL[parseInt(type, 10) % COL.length] || 'var(--pri)',
+                        width: '10px',
+                        height: '10px'
+                      }}
+                    />
+                    <span style={{ fontWeight: 500 }}>
+                      {typesList[parseInt(type, 10)] || typesList[0]}
+                    </span>
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {isTypeDropdownOpen && (
+                  <div className="category-select-popover">
+                    <div className="category-list">
+                      {typesList.map((t, i) => {
+                        const isSelected = String(i) === type;
+                        return (
+                          <button
+                            type="button"
+                            key={t}
+                            className={`category-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              setType(String(i));
+                              setIsTypeDropdownOpen(false);
+                            }}
+                          >
+                            <span className="category-checkbox">
+                              {isSelected && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </span>
+                            <i
+                              className="dot"
+                              style={{
+                                background: COL[i % COL.length],
+                                width: '8px',
+                                height: '8px'
+                              }}
+                            />
+                            <span>{t}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="category-add-row">
+                      {!isAddingNewType ? (
+                        <button
+                          type="button"
+                          className="category-add-btn"
+                          onClick={() => setIsAddingNewType(true)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          <span>Yangi tadbir turi</span>
+                        </button>
+                      ) : (
+                        <div className="category-add-form">
+                          <input
+                            type="text"
+                            className="in"
+                            style={{ height: '36px', fontSize: '13px' }}
+                            placeholder="Yangi tur nomi (masalan: IT kurslar)..."
+                            value={newTypeName}
+                            onChange={e => setNewTypeName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddNewType();
+                              } else if (e.key === 'Escape') {
+                                setIsAddingNewType(false);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              className="bt g"
+                              style={{ height: '30px', padding: '0 10px', fontSize: '12px' }}
+                              onClick={() => {
+                                setIsAddingNewType(false);
+                                setNewTypeName('');
+                              }}
+                            >
+                              Bekor qilish
+                            </button>
+                            <button
+                              type="button"
+                              className="bt"
+                              style={{ height: '30px', padding: '0 12px', fontSize: '12px' }}
+                              onClick={handleAddNewType}
+                            >
+                              Qo‘shish
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -226,7 +370,7 @@ export const EventFormPage: React.FC<EventFormProps> = ({ onNavigate }) => {
               <div className="sm mp" style={{ marginTop: '12px' }}>
                 <b style={{ color: 'var(--tx)', fontSize: '14px' }}>{MH[locIndex]} mahallasi</b>
                 <div style={{ color: 'var(--mut)', marginTop: '2px' }}>{LOCS[locIndex].n}</div>
-                <div style={{ color: '#00bcd4', fontWeight: 600, fontSize: '11.5px', marginTop: '6px' }}>
+                <div style={{ color: 'var(--pri)', fontWeight: 600, fontSize: '11.5px', marginTop: '6px' }}>
                   ✓ Ushbu tadbir {MH[locIndex]} mahallasi faollik ko‘rsatkichlariga avtomatik qo‘shiladi
                 </div>
               </div>
