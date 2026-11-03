@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+  COACH
+  VOLUNTEER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum EventCategory {
+  SPORT
+  CULTURAL
+  EDUCATION
+  EMPLOYMENT
+  VOLUNTEER
+  OTHER
+}
+
+enum AttendanceStatus {
+  REGISTERED
+  ATTENDED
+  MISSED
+  CANCELLED
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  name         String
+  phone        String       @unique
+  passwordHash String?
+  role         Role         @default(USER)
+  mahallaId    Int?
+  mahalla      Mahalla?     @relation(fields: [mahallaId], references: [id], onDelete: SetNull)
+  status       UserStatus   @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  registrations EventRegistration[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  createdEvents Event[]             @relation("CreatedEvents")
+
+  @@index([phone])
+  @@index([status, role])
+  @@map("users")
+}
+
+model Mahalla {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  population Int      @default(0)
+  youthCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  places Place[]
+  users  User[]
+
+  @@map("mahallas")
+}
+
+model Place {
+  id            Int      @id @default(autoincrement())
+  name          String
+  category      String
+  address       String
+  latitude      Float
+  longitude     Float
+  googlePlaceId String?
+  mahallaId     Int
+  mahalla       Mahalla  @relation(fields: [mahallaId], references: [id], onDelete: Cascade)
+  capacity      Int      @default(100)
+  createdAt     DateTime @default(now())
+
+  events Event[]
+
+  @@index([mahallaId])
+  @@index([category])
+  @@map("places")
+}
+
+model Event {
+  id          Int           @id @default(autoincrement())
+  title       String
+  category    EventCategory
+  placeId     Int
+  place       Place         @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  date        String        // YYYY-MM-DD
+  time        String        // HH:mm
+  ageRange    String        @default("15–25 yosh")
+  capacity    Int           @default(100)
+  description String        @db.Text
+  imageUrl    String?
+  createdById Int?
+  createdBy   User?         @relation("CreatedEvents", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  registrations EventRegistration[]
+
+  @@index([date])
+  @@index([category])
+  @@index([placeId])
+  @@map("events")
+}
+
+model EventRegistration {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId     Int
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status      AttendanceStatus @default(REGISTERED)
+  qrToken     String?          @unique
+  registeredAt DateTime        @default(now())
+  checkedInAt  DateTime?
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([userId])
+  @@map("event_registrations")
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  Int?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+

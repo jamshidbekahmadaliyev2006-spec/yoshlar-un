@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: Yunusobod — Birga API
+  version: 1.0.0
+  description: >
+    Yunusobod tumani Yoshlar Bandligi va Faolligi Platformasi uchun yagona REST API shartnomasi.
+    Admin panel va Mobil ilova (Flutter/React Native) shu spetsifikatsiya asosida ishlaydi.
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Mahalliy rivojlanish serveri
+  - url: https://api.yunusobod.uz/api/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+
+    UserRole:
+      type: string
+      enum: [ADMIN, USER, COACH, VOLUNTEER]
+
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, BLOCKED]
+
+    EventCategory:
+      type: string
+      enum: [SPORT, CULTURAL, EDUCATION, EMPLOYMENT, VOLUNTEER, OTHER]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        mahallaId:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    Mahalla:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        population:
+          type: integer
+        youthCount:
+          type: integer
+
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        googlePlaceId:
+          type: string
+          nullable: true
+        mahallaId:
+          type: integer
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/EventCategory'
+        placeId:
+          type: integer
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        ageRange:
+          type: string
+        capacity:
+          type: integer
+        description:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        registeredCount:
+          type: integer
+        attendedCount:
+          type: integer
+        place:
+          $ref: '#/components/schemas/Place'
+
+paths:
+  /auth/login:
+    post:
+      summary: Admin tizimga kirishi
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: Muvaffaqiyatli autentifikatsiya
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /auth/otp/send:
+    post:
+      summary: Mobil foydalanuvchiga SMS kod yuborish
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "+998901234567"
+      responses:
+        200:
+          description: SMS kod yuborildi
+
+  /auth/otp/verify:
+    post:
+      summary: SMS kodni tekshirish va kirish
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+                  example: "123456"
+      responses:
+        200:
+          description: Kod to'g'ri, foydalanuvchi tizimga kirdi
+
+  /auth/me:
+    get:
+      summary: Joriy foydalanuvchi profili
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Profil ma'lumotlari
+
+  /users:
+    get:
+      summary: Foydalanuvchilar ro'yxati (filtrlash va sahifalash bilan)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Ism yoki telefon bo'yicha qidirish
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: Foydalanuvchilar ro'yxati
+
+  /users/{id}/status:
+    patch:
+      summary: Foydalanuvchi holatini o'zgartirish (Faol / Bloklangan)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/UserStatus'
+      responses:
+        200:
+          description: Holat muvaffaqiyatli o'zgartirildi
+
+  /users/export:
+    get:
+      summary: Foydalanuvchilarni CSV fayl sifatida eksport qilish
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: CSV fayl
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /mahallas:
+    get:
+      summary: Yunusobod mahallalari ro'yxati
+      tags: [Mahallas]
+      responses:
+        200:
+          description: Barcha mahallalar
+
+  /places:
+    get:
+      summary: Barcha joylar (maktab, stadion, masjid, parklar)
+      tags: [Places]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: mahallaId
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Joylar ro'yxati va koordinatalari
+
+  /events:
+    get:
+      summary: Tadbirlar ro'yxati (qidirish, toifa, sana bo'yicha)
+      tags: [Events]
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Tadbirlar ro'yxati
+    post:
+      summary: Yangi tadbir qo'shish
+      tags: [Events]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, category, placeId, date, time, description]
+              properties:
+                title:
+                  type: string
+                category:
+                  $ref: '#/components/schemas/EventCategory'
+                placeId:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                ageRange:
+                  type: string
+                capacity:
+                  type: integer
+                description:
+                  type: string
+                imageUrl:
+                  type: string
+      responses:
+        201:
+          description: Tadbir yaratildi
+
+  /events/{id}:
+    get:
+      summary: Tadbir tafsilotlari
+      tags: [Events]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Tadbir ma'lumotlari
+
+  /events/{id}/register:
+    post:
+      summary: Tadbirga ro'yxatdan o'tish
+      tags: [Registrations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Ro'yxatdan o'tildi
+    delete:
+      summary: Tadbirga yozilishni bekor qilish
+      tags: [Registrations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Bekor qilindi
+
+  /events/{id}/participants:
+    get:
+      summary: Tadbir ishtirokchilari ro'yxati
+      tags: [Registrations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Ishtirokchilar ro'yxati
+
+  /stats/overview:
+    get:
+      summary: Bosh sahifadagi 4 ta asosiy kartochka statistikasi
+      tags: [Stats]
+      responses:
+        200:
+          description: Jami foydalanuvchilar, tadbirlar, faollar, bugungi tadbirlar
+
+  /stats/weekly:
+    get:
+      summary: Haftalar bo'yicha ro'yxatdan o'tganlar va haqiqatda kelganlar
+      tags: [Stats]
+      responses:
+        200:
+          description: 4 haftalik davomat va kelish foizlari
+
+  /stats/mahallas:
+    get:
+      summary: Mahallalar bo'yicha faollik ko'rsatkichlari
+      tags: [Stats]
+      parameters:
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [c, p, k]
+            default: c
+      responses:
+        200:
+          description: Mahallalar reytingi
+
+  /stats/categories:
+    get:
+      summary: Tadbirlar turlari bo'yicha taqsimot (Donut chart uchun)
+      tags: [Stats]
+      responses:
+        200:
+          description: Kategoriyalar soni va foizlari
+
+  /settings:
+    get:
+      summary: Tizim sozlamalari
+      tags: [Settings]
+      responses:
+        200:
+          description: Joriy sozlamalar
+    put:
+      summary: Tizim sozlamalarini yangilash
+      tags: [Settings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                districtName:
+                  type: string
+                systemName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                notifications:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        200:
+          description: Sozlamalar saqlandi
+
+  /settings/password:
+    put:
+      summary: Admin parolini o'zgartirish
+      tags: [Settings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                username:
+                  type: string
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        200:
+          description: Parol o'zgartirildi
+
+  /uploads:
+    post:
+      summary: Rasm yuklash (PNG, JPG, maks 5MB)
+      tags: [Uploads]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Rasm yuklandi va URL qaytarildi
+

@@ -1,0 +1,122 @@
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes growY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ping {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7) rotate(-60deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes drift {
+  to {
+    transform: translate(8vw, 6vw) scale(1.15);
+  }
+}
+
+.aur {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--aur);
+  overflow: hidden;
+}
+
+.aur i {
+  position: absolute;
+  width: 55vw;
+  height: 55vw;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(19, 100, 235, 0.35), transparent);
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.aur i:nth-child(1) {
+  left: -10vw;
+  top: -15vw;
+}
+
+.aur i:nth-child(2) {
+  right: -15vw;
+  bottom: -20vw;
+  animation-delay: -9s;
+  background: radial-gradient(closest-side, rgba(9, 36, 85, 0.35), transparent);
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  transform-origin: left;
+  animation: grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.vb {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: growY 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.ping {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ping 1.6s ease-out infinite;
+}
+
+.dsv {
+  animation: pop 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.an-rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
