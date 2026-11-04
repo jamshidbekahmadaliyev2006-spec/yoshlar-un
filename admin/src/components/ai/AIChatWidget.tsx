@@ -132,17 +132,32 @@ export const AIChatWidget: React.FC = () => {
 
   /**
    * Mukammal matn va yozuvlar formatlash mexanizmi:
+   * - Markdown jadvallarini to'liq HTML table formatida chiroyli va toza render qilish
    * - 1., 2., 3. raqamlangan bo'limlar uchun maxsus chiroyli nishonlar (section badges)
    * - *, -, • bilan boshlangan ro'yxatlarni toza doirachali (bullet dot) ro'yxatga aylantirish
    * - Kalit so'z va parametrlarni (Key: Value) chiroyli qalin qilib ajratish
    * - Xatolik so'zlarni (masalan, "блокнанные") avtomatik to'g'irlash
+   * - Chala uzilgan xom quvur belgilarini tozalash
    */
   const renderFormattedMessage = (content: string) => {
     if (!content) return null;
 
-    const sanitized = content
+    // 1. Qatorlarni normallashtirish va xatoliklarni to'g'irlash
+    let sanitized = content
+      .replace(/\r\n/g, '\n')
+      .replace(/\\n/g, '\n')
       .replace(/блокнанн[ыоеа-я]*/gi, 'заблокированные')
-      .replace(/блокн[а-я]*/gi, 'заблокированные');
+      .replace(/блокн[а-я]*/gi, 'заблокированные')
+      .replace(/^[ \t]*\|\|[ \t]*/gm, '| ')
+      .replace(/[ \t]+\|[ \t]+\|[ \t]+/g, ' | ')
+      .replace(/\|\s*narxi\s*\|/gi, '| Izoh |')
+      .replace(/\|\s*qisqacha tavsif\s*\|/gi, '| Holati |');
+
+    // 2. Bir qatorga yopishib qolgan markdown jadvallarini to'g'irlash (mavjud to'g'ri jadvallarni buzmasdan):
+    sanitized = sanitized.replace(/(\|[^\n|]+)\s*\|\s*([-:]{3,}(?:\s*\|\s*[-:]{3,})+)\s*\|/g, '$1|\n| $2 |');
+    sanitized = sanitized.replace(/(\|[-:\s|]+)\s*\|\s*(\d+\s*\|)/g, '$1\n| $2');
+    sanitized = sanitized.replace(/(\|[^\n|]+)\|\s*(\d+\s*\|)/g, '$1|\n| $2');
+    sanitized = sanitized.replace(/\n\s*\|{1,2}[^\n|]*$/g, '');
 
     const lines = sanitized.split('\n');
     const elements: React.ReactNode[] = [];
@@ -161,50 +176,149 @@ export const AIChatWidget: React.FC = () => {
       });
     };
 
-    lines.forEach((rawLine, idx) => {
+    let i = 0;
+    while (i < lines.length) {
+      const rawLine = lines[i];
       const line = rawLine.trim();
 
       if (!line) {
-        elements.push(<div key={`gap-${idx}`} className="ai-line-gap" />);
-        return;
+        elements.push(<div key={`gap-${i}`} className="ai-line-gap" />);
+        i++;
+        continue;
       }
 
-      // 1. Raqamlangan bo'lim sarlavhalari (masalan: "1. Направления с минимальным количеством мероприятий:")
+      // 1. Markdown jadvali aniqlash (| Col 1 | Col 2 | ... yoki 1 | Col 1 | ...)
+      const isTableStart = line.startsWith('|') || /^(?:№|No|T\/r|\d+)\s*\|/i.test(line);
+      if (isTableStart) {
+        const tableLines: string[] = [];
+        let cur = i;
+        while (cur < lines.length) {
+          let tl = lines[cur].trim();
+          if (!tl) break;
+          // Agar qator boshidagi | tushib qolgan bo'lsa, uni qo'shamiz
+          if (!tl.startsWith('|') && (/^\d+\s*\|/.test(tl) || /^(?:№|No|T\/r)\s*\|/i.test(tl))) {
+            tl = '| ' + tl;
+          }
+          if (!tl.startsWith('|')) break;
+          if (!tl.endsWith('|')) {
+            tl = tl + ' |';
+          }
+          tableLines.push(tl);
+          cur++;
+        }
+
+        if (tableLines.length >= 2) {
+          // Birinchi qator: Header ustunlar
+          const headerCells = tableLines[0].split('|').slice(1, -1).map(c => c.trim());
+
+          // Separator qatorlarini aniqlash va o'tkazib yuborish
+          let dataStartIndex = 1;
+          while (dataStartIndex < tableLines.length) {
+            const rowCells = tableLines[dataStartIndex].split('|').slice(1, -1).map(c => c.trim());
+            const isSeparator = rowCells.length > 0 && rowCells.every(c => /^[-:\s]*$/.test(c));
+            if (isSeparator) {
+              dataStartIndex++;
+            } else {
+              break;
+            }
+          }
+
+          const dataRows = tableLines.slice(dataStartIndex).map(tl =>
+            tl.split('|').slice(1, -1).map(c => c.trim())
+          ).filter(row => 
+            row.length > 0 && 
+            !row.every(cell => /^[-:\s]*$/.test(cell)) &&
+            row.some(cell => cell.length > 0)
+          );
+
+          if (dataRows.length > 0) {
+            i = cur;
+            elements.push(
+              <div key={`table-${i}`} className="ai-chat-table-wrapper">
+                <table className="ai-chat-table">
+                  <thead>
+                    <tr>
+                      {headerCells.map((h, hIdx) => (
+                        <th key={hIdx} className={hIdx === 0 ? 'ai-th-num' : ''}>
+                          {formatInline(h)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataRows.map((row, rIdx) => (
+                      <tr key={rIdx}>
+                        {row.map((cell, cIdx) => (
+                          <td key={cIdx} className={cIdx === 0 ? 'ai-td-num' : ''}>
+                            {formatInline(cell)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+            continue;
+          }
+        }
+      }
+
+      // 2. Raqamlangan bo'lim sarlavhalari (masalan: "1. Направления с минимальным количеством мероприятий:")
       const sectionMatch = line.match(/^(\d+)[\.\)]\s+(.+)$/);
       if (sectionMatch) {
         const num = sectionMatch[1];
         const title = sectionMatch[2];
         elements.push(
-          <div key={`section-${idx}`} className="ai-section-row">
+          <div key={`section-${i}`} className="ai-section-row">
             <span className="ai-section-pill">{num}</span>
             <div className="ai-section-title">{formatInline(title)}</div>
           </div>
         );
-        return;
+        i++;
+        continue;
       }
 
-      // 2. Ro'yxat bandlari (masalan: "* Теннис: 0 мероприятий." yoki "- Kurash: 1 ta")
+      // 3. Ro'yxat bandlari (masalan: "* Tennis: 0 мероприятий." yoki "- Kurash: 1 ta")
       const bulletMatch = line.match(/^[\*\-\•]\s+(.+)$/);
       if (bulletMatch) {
         const bulletText = bulletMatch[1];
         elements.push(
-          <div key={`bullet-${idx}`} className="ai-bullet-row">
+          <div key={`bullet-${i}`} className="ai-bullet-row">
             <span className="ai-bullet-symbol" />
             <div className="ai-bullet-text">
               {formatInline(bulletText)}
             </div>
           </div>
         );
-        return;
+        i++;
+        continue;
       }
 
-      // 3. Oddiy matn paragrafi
+      // 4. Chala uzilgan xom quvur fragmenti bo'lsa (masalan "|| a) Sport | 91 (38"), uni tashlab yuboramiz
+      if (line.startsWith('|') && line.split('|').length < 3) {
+        i++;
+        continue;
+      }
+      if (/^\|{1,2}\s*[a-zA-Z0-9\(\)\'\s]+$/.test(line)) {
+        i++;
+        continue;
+      }
+
+      // 5. Oddiy matn paragrafi (agar adashib boshida || yoki | qolib ketgan bo'lsa, xom quvur bo'lib chiqmasin)
+      const cleanLine = line.replace(/^\|{1,2}\s*/, '').replace(/\|+$/, '').trim();
+      if (!cleanLine) {
+        i++;
+        continue;
+      }
+
       elements.push(
-        <p key={`p-${idx}`} className="ai-text-paragraph">
-          {formatInline(line)}
+        <p key={`p-${i}`} className="ai-text-paragraph">
+          {formatInline(cleanLine)}
         </p>
       );
-    });
+      i++;
+    }
 
     return <div className="ai-formatted-body">{elements}</div>;
   };
@@ -465,61 +579,62 @@ export const AIChatWidget: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Message Footer: Vaqt hamda Nusxa olish, Like, Dislike tugmalari (media_1793716182304_cddfb8fb.png) */}
-                  <div className="ai-msg-footer">
+                  {/* Message Footer: Vaqt hamda Nusxa olish (AI va Foydalanuvchi uchun), Like, Dislike tugmalari */}
+                  <div className={`ai-msg-footer ${msg.role === 'user' ? 'ai-user-footer' : ''}`}>
                     <span className="ai-msg-time">{msg.timestamp}</span>
 
-                    {msg.role === 'assistant' && (
-                      <div className="ai-msg-actions">
-                        {/* Nusxa olish (Copy) */}
-                        <button
-                          className="ai-msg-act-btn"
-                          onClick={() => handleCopy(msg.id, msg.content)}
-                          title={msg.lang === 'ru' ? 'Скопировать' : msg.lang === 'en' ? 'Copy' : 'Nusxa olish'}
-                          aria-label="Nusxa olish"
-                        >
-                          {copiedId === msg.id ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            </svg>
-                          )}
-                          {copiedId === msg.id && (
-                            <span className="ai-copied-toast">
-                              {msg.lang === 'ru' ? 'Скопировано!' : msg.lang === 'en' ? 'Copied!' : 'Nusxa olindi!'}
-                            </span>
-                          )}
-                        </button>
-
-                        {/* Foydali (Like / Thumbs Up) */}
-                        <button
-                          className={`ai-msg-act-btn ${reactions[msg.id] === 'up' ? 'active-up' : ''}`}
-                          onClick={() => handleReaction(msg.id, 'up')}
-                          title={msg.lang === 'ru' ? 'Полезный ответ' : msg.lang === 'en' ? 'Helpful' : 'Foydali javob'}
-                          aria-label="Like"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill={reactions[msg.id] === 'up' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    <div className="ai-msg-actions">
+                      {/* Nusxa olish (Copy) - ham foydalanuvchi savoli, ham AI javobi uchun */}
+                      <button
+                        className="ai-msg-act-btn"
+                        onClick={() => handleCopy(msg.id, msg.content)}
+                        title={msg.lang === 'ru' ? 'Скопировать' : msg.lang === 'en' ? 'Copy' : 'Nusxa olish'}
+                        aria-label="Nusxa olish"
+                      >
+                        {copiedId === msg.id ? (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
                           </svg>
-                        </button>
-
-                        {/* Foydasiz (Dislike / Thumbs Down) */}
-                        <button
-                          className={`ai-msg-act-btn ${reactions[msg.id] === 'down' ? 'active-down' : ''}`}
-                          onClick={() => handleReaction(msg.id, 'down')}
-                          title={msg.lang === 'ru' ? 'Не полезный ответ' : msg.lang === 'en' ? 'Unhelpful' : 'Foydasiz javob'}
-                          aria-label="Dislike"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill={reactions[msg.id] === 'down' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
+                        ) : (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                           </svg>
-                        </button>
-                      </div>
-                    )}
+                        )}
+                        {copiedId === msg.id && (
+                          <span className="ai-copied-toast">
+                            {msg.lang === 'ru' ? 'Скопировано!' : msg.lang === 'en' ? 'Copied!' : 'Nusxa olindi!'}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Foydali va Foydasiz (Like / Dislike) faqat AI yordamchi xabarlari uchun */}
+                      {msg.role === 'assistant' && (
+                        <>
+                          <button
+                            className={`ai-msg-act-btn ${reactions[msg.id] === 'up' ? 'active-up' : ''}`}
+                            onClick={() => handleReaction(msg.id, 'up')}
+                            title={msg.lang === 'ru' ? 'Полезный ответ' : msg.lang === 'en' ? 'Helpful' : 'Foydali javob'}
+                            aria-label="Like"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill={reactions[msg.id] === 'up' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                            </svg>
+                          </button>
+
+                          <button
+                            className={`ai-msg-act-btn ${reactions[msg.id] === 'down' ? 'active-down' : ''}`}
+                            onClick={() => handleReaction(msg.id, 'down')}
+                            title={msg.lang === 'ru' ? 'Не полезный ответ' : msg.lang === 'en' ? 'Unhelpful' : 'Foydasiz javob'}
+                            aria-label="Dislike"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill={reactions[msg.id] === 'down' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

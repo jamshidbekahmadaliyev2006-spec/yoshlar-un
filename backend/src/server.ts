@@ -15,6 +15,7 @@ import registrationsRoutes from './modules/registrations/routes';
 import statsRoutes from './modules/stats/routes';
 import settingsRoutes from './modules/settings/routes';
 import uploadsRoutes from './modules/uploads/routes';
+import aiRoutes from './modules/ai/routes';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use(`${API_PREFIX}/registrations`, registrationsRoutes);
 app.use(`${API_PREFIX}/stats`, statsRoutes);
 app.use(`${API_PREFIX}/settings`, settingsRoutes);
 app.use(`${API_PREFIX}/uploads`, uploadsRoutes);
+app.use(`${API_PREFIX}/ai`, aiRoutes);
 
 // Salomatlik tekshiruvi (Health check)
 app.get(`${API_PREFIX}/health`, (req: Request, res: Response) => {

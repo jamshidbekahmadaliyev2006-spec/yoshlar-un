@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// .env faylini yuklash (backend/.env yoki ildizdagi .env)
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export const env = {
   PORT: process.env.PORT || '5000',
@@ -13,6 +15,7 @@ export const env = {
   ADMIN_USERNAME: process.env.ADMIN_USERNAME || 'admin',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin',
   UPLOAD_DIR: process.env.UPLOAD_DIR || 'uploads',
-  MAX_FILE_SIZE_MB: parseInt(process.env.MAX_FILE_SIZE_MB || '5', 10)
+  MAX_FILE_SIZE_MB: parseInt(process.env.MAX_FILE_SIZE_MB || '5', 10),
+  GROQ_API_KEY: process.env.GROQ_API_KEY || ''
 };
 

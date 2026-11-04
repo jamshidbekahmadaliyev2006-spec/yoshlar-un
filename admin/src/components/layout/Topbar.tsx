@@ -116,7 +116,10 @@ export const Topbar: React.FC<TopbarProps> = ({ currentRoute, onNavigate, onBack
           className="mi"
           onClick={() => {
             setAdminOpen(false);
-            showToast('Demo rejimida chiqish o‘chirilgan');
+            localStorage.removeItem('yb_auth');
+            sessionStorage.removeItem('yb_auth');
+            showToast('Tizimdan muvaffaqiyatli chiqildi');
+            onNavigate('login');
           }}
         >
           Chiqish

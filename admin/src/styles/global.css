@@ -2486,6 +2486,92 @@ select option,
   color: #ffffff;
 }
 
+/* AI Chat Jadval (Table) dizayni - Davlat va zamonaviy standart */
+.ai-chat-table-wrapper {
+  margin: 10px 0;
+  border-radius: 10px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: var(--card);
+  max-width: 100%;
+}
+
+.ai-chat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.ai-chat-table thead {
+  background: #1e3a8a;
+}
+
+:root[data-theme="dark"] .ai-chat-table thead {
+  background: #1e293b;
+}
+
+.ai-chat-table th {
+  padding: 8px 10px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.ai-chat-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--tx);
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.ai-chat-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ai-chat-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+:root[data-theme="dark"] .ai-chat-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ai-chat-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.07);
+}
+
+:root[data-theme="dark"] .ai-chat-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.ai-th-num,
+.ai-td-num {
+  width: 34px;
+  text-align: center !important;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+:root[data-theme="dark"] .ai-th-num,
+:root[data-theme="dark"] .ai-td-num {
+  color: #60a5fa;
+}
+
+.ai-chat-table th.ai-th-num {
+  color: #ffffff;
+}
+
+.ai-user-footer {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* Action card (Excel yuklab olish kartasi) */
 .ai-action-card {
   margin-top: 10px;

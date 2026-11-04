@@ -4,16 +4,26 @@ import { Topbar } from './components/layout/Topbar';
 import { AppRouter } from './router';
 import { Toast } from './components/ui/Toast';
 import { AIChatWidget } from './components/ai/AIChatWidget';
+import { LoginPage } from './pages/Login';
 
 export const App: React.FC = () => {
   const [route, setRoute] = useState<string>(() => {
     return window.location.hash.slice(1) || 'dashboard';
   });
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (window.location.hash === '#login') return false;
+    const auth = localStorage.getItem('yb_auth') || sessionStorage.getItem('yb_auth');
+    return auth === 'true';
+  });
+
   useEffect(() => {
     const handleHashChange = () => {
       const newRoute = window.location.hash.slice(1) || 'dashboard';
       setRoute(newRoute);
+      if (newRoute === 'login') {
+        setIsAuthenticated(false);
+      }
       window.scrollTo(0, 0);
     };
 
@@ -32,6 +42,21 @@ export const App: React.FC = () => {
       navigate('dashboard');
     }
   };
+
+  // Agar foydalanuvchi tizimga kirmagan bo'lsa yoki #login sahifasida bo'lsa, 3D Login sahifasini ko'rsatamiz
+  if (!isAuthenticated || route === 'login') {
+    return (
+      <>
+        <LoginPage
+          onSuccess={() => {
+            setIsAuthenticated(true);
+            navigate('dashboard');
+          }}
+        />
+        <Toast />
+      </>
+    );
+  }
 
   return (
     <>
