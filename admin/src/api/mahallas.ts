@@ -6,7 +6,8 @@ export const mahallasApi = {
   getStats: (
     sortBy: 'r' | 'k' | 'avg' = 'r',
     selectedDate?: string,
-    selectedPreset?: string
+    selectedPreset?: string,
+    forceAllTime: boolean = false
   ): (MahallaStat & { i: number; r: number; avg: number })[] => {
     const events = apiClient.getEvents();
     const monthPrefix = selectedDate ? selectedDate.slice(0, 7) : '';
@@ -14,8 +15,14 @@ export const mahallasApi = {
     const data = MH.map((name, i) => {
       const mahallaEvents = events.filter(e => {
         if (e.loc !== i) return false;
-        if (selectedDate && selectedPreset === 'month') {
-          return e.date.slice(0, 7) === monthPrefix;
+        if (!forceAllTime && selectedDate && selectedPreset !== 'all') {
+          if (selectedPreset === 'month') {
+            return e.date.slice(0, 7) === monthPrefix;
+          }
+          if (selectedPreset === 'year') {
+            return e.date.startsWith(selectedDate.slice(0, 4));
+          }
+          return e.date === selectedDate;
         }
         return true;
       });

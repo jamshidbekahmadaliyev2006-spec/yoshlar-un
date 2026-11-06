@@ -204,6 +204,12 @@ export const Topbar: React.FC<TopbarProps> = ({ currentRoute, onNavigate, onBack
     if (currentRoute === 'tadbir-qoshish') return ['Tadbir qo‘shish', 'Yangi tadbir ma’lumotlarini kiriting'];
     if (currentRoute === 'mahalla') return ['', ''];
     if (currentRoute === 'tadbirlar') return ['Tadbirlar', 'Barcha tadbirlar ro‘yxati'];
+    if (currentRoute === 'murojaatlar') {
+      return [
+        'Foydalanuvchilar murojaatlari',
+        'Yunusobod yoshlari va mobil ilova foydalanuvchilaridan kelib tushgan taklif, savol va murojaatlar boshqaruvi'
+      ];
+    }
     return ['Sozlamalar', 'Tizim sozlamalarini boshqaring'];
   };
 

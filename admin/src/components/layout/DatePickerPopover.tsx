@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '../ui/Icon';
 import { pad, MN, TODAY } from '../../utils/format';
 import { useDateFilter } from '../../store/dateFilterStore';
+import { showToast } from '../ui/Toast';
 
 interface DatePickerPopoverProps {
   onDateChange?: (date: string) => void;
@@ -182,7 +183,14 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
 
   const handleSelectDay = (cell: CalendarCell) => {
     const cellDateStr = `${cell.year}-${pad(cell.month + 1)}-${pad(cell.day)}`;
-    if (cellDateStr > TODAY) return; // Future date blocked
+    if (cellDateStr > TODAY) return; // Kelajak sanalar bloklangan
+
+    // Agar tanlangan kun qayta bosilsa, butun oyni tanlashga o'tish
+    if (selectedDay === cell.day && viewMonth === cell.month && viewYear === cell.year) {
+      setSelectedDay(null);
+      setActivePreset('month');
+      return;
+    }
 
     setViewYear(cell.year);
     setViewMonth(cell.month);
@@ -198,6 +206,8 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
     if (onDateChange) {
       onDateChange(targetDate);
     }
+    const mName = MN[cell.month] ? MN[cell.month][0].toUpperCase() + MN[cell.month].slice(1) : '';
+    showToast(`${cell.day}-${mName} ${cell.year} sanasi tanlandi`);
     setIsOpen(false);
   };
 
@@ -216,6 +226,15 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       setViewYear(yest.getFullYear());
       setViewMonth(yest.getMonth());
       setSelectedDay(yest.getDate());
+    } else if (preset === 'week') {
+      setViewYear(todayYear);
+      setViewMonth(todayMonth - 1);
+      setSelectedDay(todayDay);
+    } else if (preset === 'month') {
+      setSelectedDay(null);
+    } else if (preset === 'year') {
+      setViewYear(todayYear);
+      setSelectedDay(null);
     } else {
       setSelectedDay(null);
     }
@@ -229,7 +248,8 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       const end = TODAY;
       targetDate = TODAY;
       setDateRange(start, end, targetDate, 'all');
-    } else if (activePreset === 'month') {
+      showToast('Barcha davr filtri qo‘llandi');
+    } else if (activePreset === 'month' || selectedDay === null) {
       const isCurM = viewYear === todayYear && viewMonth === todayMonth - 1;
       const daysInM = new Date(viewYear, viewMonth + 1, 0).getDate();
       const endD = isCurM ? Math.min(todayDay, daysInM) : daysInM;
@@ -237,19 +257,24 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       const end = `${viewYear}-${pad(viewMonth + 1)}-${pad(endD)}`;
       targetDate = start;
       setDateRange(start, end, targetDate, 'month');
+      const mName = MN[viewMonth] ? MN[viewMonth][0].toUpperCase() + MN[viewMonth].slice(1) : '';
+      showToast(`${mName} ${viewYear} filtri qo‘llandi`);
     } else if (activePreset === 'year') {
       const start = `${viewYear}-01-01`;
       const isCurY = viewYear === todayYear;
       const end = isCurY ? `${todayYear}-${pad(todayMonth)}-${pad(todayDay)}` : `${viewYear}-12-31`;
       targetDate = start;
       setDateRange(start, end, targetDate, 'year');
+      showToast(`${viewYear}-yil filtri qo‘llandi`);
     } else if (activePreset === 'today') {
       targetDate = TODAY;
       setPreset('today');
+      showToast('Bugungi sana tanlandi');
     } else if (activePreset === 'yesterday') {
       const yest = new Date(todayYear, todayMonth - 1, todayDay - 1);
       targetDate = `${yest.getFullYear()}-${pad(yest.getMonth() + 1)}-${pad(yest.getDate())}`;
       setPreset('yesterday');
+      showToast('Kechagi sana tanlandi');
     } else if (activePreset === 'week') {
       const refDay = selectedDay || Math.min(todayDay, daysInCurrentMonth);
       const d = new Date(viewYear, viewMonth, refDay);
@@ -263,6 +288,7 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       const end = sundayStr > TODAY ? TODAY : sundayStr;
       targetDate = start;
       setDateRange(start, end, targetDate, 'week');
+      showToast('Shu hafta filtri qo‘llandi');
     } else {
       // Custom single day
       const day = selectedDay || 1;
@@ -270,6 +296,8 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
       if (candidate > TODAY) candidate = TODAY;
       targetDate = candidate;
       setDate(targetDate, '00:00', 'custom');
+      const mName = MN[viewMonth] ? MN[viewMonth][0].toUpperCase() + MN[viewMonth].slice(1) : '';
+      showToast(`${day}-${mName} ${viewYear} sanasi tanlandi`);
     }
 
     if (onDateChange) {
@@ -287,6 +315,7 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
     if (onDateChange) {
       onDateChange(TODAY);
     }
+    showToast('Bugungi sana tanlandi');
     setIsOpen(false);
   };
 
@@ -355,12 +384,13 @@ export const DatePickerPopover: React.FC<DatePickerPopoverProps> = ({ onDateChan
               type="button"
               className={`dp-preset-btn ${activePreset === 'month' ? 'active' : ''}`}
               onClick={() => handlePresetClick('month')}
+              title="To‘liq oyni tanlash"
             >
-              Shu oy
+              {isCurrentMonth ? 'Shu oy' : 'To‘liq oy'}
             </button>
             <button
               type="button"
-              className={`dp-preset-btn ${activePreset === 'year' ? 'active' : ''}`}
+              className={`dp-preset-btn ${activePreset === 'year' && viewYear === todayYear ? 'active' : ''}`}
               onClick={() => handlePresetClick('year')}
             >
               Shu yil

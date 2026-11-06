@@ -16,7 +16,9 @@ const PATHS: Record<string, string> = {
   up: '<path d="M12 16V5M7 9l5-5 5 5M4 19h16"/>',
   check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
   edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
-  x: '<path d="M18 6L6 18M6 6l12 12"/>'
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>'
 };
 
 interface IconProps {

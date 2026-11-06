@@ -8,7 +8,7 @@ import { showToast } from '../../components/ui/Toast';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 export const UsersPage: React.FC = () => {
-  const { selectedDate, selectedPreset } = useDateFilter();
+  const { selectedDate, selectedPreset, startDate, endDate } = useDateFilter();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -31,8 +31,19 @@ export const UsersPage: React.FC = () => {
   const [dYear, dMonth] = selectedDate.split('-').map(Number);
   const monthSuffix = `.${pad(dMonth)}.${dYear}`;
   const dateFormatted = selectedDate.split('-').reverse().join('.');
-  const isDateMatch = (userDate: string) =>
-    selectedPreset === 'month' ? userDate.endsWith(monthSuffix) : userDate === dateFormatted;
+  const isDateMatch = (userDate: string) => {
+    if (selectedPreset === 'all') return true;
+    if (selectedPreset === 'month') return userDate.endsWith(monthSuffix);
+    if (selectedPreset === 'year') return userDate.endsWith(String(dYear));
+    if (startDate && endDate && startDate !== endDate) {
+      const parts = userDate.split('.');
+      if (parts.length === 3) {
+        const iso = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        return iso >= startDate && iso <= endDate;
+      }
+    }
+    return userDate === dateFormatted;
+  };
   const dateNewCount = allUsers.filter(u => isDateMatch(u.d)).length;
 
   const filteredUsers = useMemo(() => {
@@ -157,89 +168,129 @@ export const UsersPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 4 Mini Statistika */}
-      <section className="sg" id="us">
+      {/* 4 Statistika Kartochkasi (Toza, kattaroq, faqat nomi va sanog'i) */}
+      <section
+        id="us"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '18px',
+          marginBottom: '22px'
+        }}
+      >
         <Card
+          lift
           className="sc"
           style={{
-            alignItems: 'center',
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
             cursor: 'pointer',
-            border: statusFilter === 'all' ? '2px solid var(--pri)' : '1px solid transparent'
+            border: statusFilter === 'all' ? '2px solid var(--pri)' : '1px solid var(--cb)',
+            boxShadow: statusFilter === 'all' ? '0 8px 24px -4px rgba(23, 99, 238, 0.35)' : 'none',
+            transition: 'all 0.25s ease'
           }}
           onClick={() => {
             setStatusFilter('all');
             setPage(1);
           }}
+          title="Barcha foydalanuvchilarni ko‘rsatish"
         >
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d3df0)', width: 42, height: 42 }}>
-            <Icon name="users" />
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Jami
           </div>
-          <div>
-            <div className="sm">Jami</div>
-            <div style={{ fontSize: '22px', fontWeight: 700 }}>{nf(allUsers.length)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--tx)', letterSpacing: '-0.5px' }}>
+            {nf(allUsers.length)}
           </div>
         </Card>
 
         <Card
+          lift
           className="sc"
           style={{
-            alignItems: 'center',
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
             cursor: 'pointer',
-            border: statusFilter === 'active' ? '2px solid #22c9a0' : '1px solid transparent'
+            border: statusFilter === 'active' ? '2px solid #22c9a0' : '1px solid var(--cb)',
+            boxShadow: statusFilter === 'active' ? '0 8px 24px -4px rgba(34, 201, 160, 0.35)' : 'none',
+            transition: 'all 0.25s ease'
           }}
           onClick={() => {
             setStatusFilter(prev => (prev === 'active' ? 'all' : 'active'));
             setPage(1);
           }}
+          title="Faol foydalanuvchilarni filtrlash"
         >
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#22c9a0,#0e9f8f)', width: 42, height: 42 }}>
-            <Icon name="users" />
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Faol
           </div>
-          <div>
-            <div className="sm">Faol</div>
-            <div style={{ fontSize: '22px', fontWeight: 700 }}>{nf(activeCount)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: '#22c9a0', letterSpacing: '-0.5px' }}>
+            {nf(activeCount)}
           </div>
         </Card>
 
         <Card
+          lift
           className="sc"
           style={{
-            alignItems: 'center',
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
             cursor: 'pointer',
-            border: statusFilter === 'blocked' ? '2px solid #d92d27' : '1px solid transparent'
+            border: statusFilter === 'blocked' ? '2px solid #ef4444' : '1px solid var(--cb)',
+            boxShadow: statusFilter === 'blocked' ? '0 8px 24px -4px rgba(239, 68, 68, 0.35)' : 'none',
+            transition: 'all 0.25s ease'
           }}
           onClick={() => {
             setStatusFilter(prev => (prev === 'blocked' ? 'all' : 'blocked'));
             setPage(1);
           }}
+          title="Bloklangan foydalanuvchilarni filtrlash"
         >
-          <div className="ico" style={{ background: '#d92d27', width: 42, height: 42 }}>
-            <Icon name="users" />
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Bloklangan
           </div>
-          <div>
-            <div className="sm">Bloklangan</div>
-            <div style={{ fontSize: '22px', fontWeight: 700 }}>{nf(blockedCount)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: '#ef4444', letterSpacing: '-0.5px' }}>
+            {nf(blockedCount)}
           </div>
         </Card>
 
         <Card
+          lift
           className="sc"
           style={{
-            alignItems: 'center',
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
             cursor: 'pointer',
-            border: statusFilter === 'new' ? '2px solid #e07b00' : '1px solid transparent'
+            border: statusFilter === 'new' ? '2px solid #f59e0b' : '1px solid var(--cb)',
+            boxShadow: statusFilter === 'new' ? '0 8px 24px -4px rgba(245, 158, 11, 0.35)' : 'none',
+            transition: 'all 0.25s ease'
           }}
           onClick={() => {
             setStatusFilter(prev => (prev === 'new' ? 'all' : 'new'));
             setPage(1);
           }}
+          title="Yangi foydalanuvchilarni filtrlash"
         >
-          <div className="ico" style={{ background: '#e07b00', width: 42, height: 42 }}>
-            <Icon name="users" />
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            {selectedDate === TODAY ? 'Yangi (bugun)' : `Yangi (${dateFormatted})`}
           </div>
-          <div>
-            <div className="sm">{selectedDate === TODAY ? 'Yangi (bugun)' : `Yangi (${dateFormatted})`}</div>
-            <div style={{ fontSize: '22px', fontWeight: 700 }}>{nf(dateNewCount)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: '#f59e0b', letterSpacing: '-0.5px' }}>
+            {nf(dateNewCount)}
           </div>
         </Card>
       </section>

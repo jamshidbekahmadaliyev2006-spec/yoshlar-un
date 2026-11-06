@@ -73,20 +73,26 @@ export const Donut: React.FC<DonutProps> = ({ forceAllTime = false }) => {
       </svg>
 
       <div style={{ flex: 1, minWidth: '170px' }}>
-        {items.map((item, idx) => (
-          <div className="lgi" key={idx} style={{ fontSize: '13px', marginBottom: '8px' }}>
-            <i className="dot" style={{ background: item.color, width: '10px', height: '10px' }} />
-            <span style={{ color: 'var(--tx)', fontWeight: 500 }}>{item.name}</span>
-            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="sm" style={{ fontSize: '12px', opacity: 0.75 }}>
-                {item.count} ta
-              </span>
-              <b style={{ fontWeight: 700, color: 'var(--tx)', minWidth: '38px', textAlign: 'right' }}>
-                {item.percent}%
-              </b>
-            </span>
+        {items.filter(item => item.count > 0).length === 0 ? (
+          <div style={{ color: 'var(--mut)', fontSize: '13px', textAlign: 'center', padding: '12px 0' }}>
+            Ushbu davrda tadbirlar rejalashtirilmagan
           </div>
-        ))}
+        ) : (
+          items.filter(item => item.count > 0).map((item, idx) => (
+            <div className="lgi" key={idx} style={{ fontSize: '13px', marginBottom: '8px' }}>
+              <i className="dot" style={{ background: item.color, width: '10px', height: '10px' }} />
+              <span style={{ color: 'var(--tx)', fontWeight: 500 }}>{item.name}</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="sm" style={{ fontSize: '12px', opacity: 0.75 }}>
+                  {item.count} ta
+                </span>
+                <b style={{ fontWeight: 700, color: 'var(--tx)', minWidth: '38px', textAlign: 'right' }}>
+                  {item.percent}%
+                </b>
+              </span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

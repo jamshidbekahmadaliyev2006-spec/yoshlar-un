@@ -72,7 +72,32 @@ Olingan token `Flutter Secure Storage` yoki `Keychain / EncryptedSharedPreferenc
 | **Tadbir tafsilotlari** | `GET /api/v1/events/:id` | Tadbir ma'lumotlari, yosh chegarasi, o'rindiqlar |
 | **Ro'yxatdan o'tish** | `POST /api/v1/events/:id/register` | 1-bosishda yozilish |
 | **Mening tadbirlarim** | `GET /api/v1/registrations/my` | Foydalanuvchi yozilgan tadbirlar va QR biletlar |
+| **Murojaat yuborish** | `POST /api/v1/appeals` | Mobil foydalanuvchilar savol, taklif yoki murojaat yuborishi |
+| **Murojaatlar ro'yxati** | `GET /api/v1/appeals` | Yuborilgan murojaatlar va ularga admin bergan javoblari |
 | **Profil & Mahalla** | `GET /api/v1/auth/me` | Foydalanuvchi ma'lumotlari |
+
+---
+
+## 📩 Yoshlar Murojaatlari (Murojaat yuborish oqimi)
+
+Mobil ilovada yoshlar tuman hokimligi va yoshlar yetakchilariga to'g'ridan-to'g'ri murojaat yo'llay oladi:
+
+### Murojaat yuborish:
+```http
+POST /api/v1/appeals
+Content-Type: application/json
+
+{
+  "userName": "Sardor Aliyev",
+  "phone": "+998901234567",
+  "mahalla": "Navbahor mahallasi",
+  "category": "IT va zamonaviy ta’lim",
+  "subject": "Dasturlash to‘garagi ochish bo‘yicha taklif",
+  "text": "Mahallamiz yoshlari uchun robototexnika to‘garagi ochishni rejalashtiryapmiz..."
+}
+```
+
+Admin javob berganida, javob matni (`replyText`), javob berilgan vaqt (`repliedAt`) va mas'ul shaxs (`repliedBy`) bilan birga qaytadi. Foydalanuvchiga SMS xabar orqali ham bildirishnoma boradi.
 
 ---
 

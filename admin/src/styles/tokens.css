@@ -58,6 +58,10 @@
     --maprd: #153e87;
     --bar-top: #60a5fa;
     --bar-bot: #2563eb;
+    --bar-active-top: #60a5fa;
+    --bar-active-bot: #1d4ed8;
+    --bar-muted-top: rgba(59, 130, 246, 0.3);
+    --bar-muted-bot: rgba(30, 58, 138, 0.22);
   }
 }
 
@@ -90,6 +94,10 @@
   --maprd: #153e87;
   --bar-top: #60a5fa;
   --bar-bot: #2563eb;
+  --bar-active-top: #60a5fa;
+  --bar-active-bot: #1d4ed8;
+  --bar-muted-top: rgba(59, 130, 246, 0.3);
+  --bar-muted-bot: rgba(30, 58, 138, 0.22);
 }
 
 :root[data-theme="light"] {
@@ -120,5 +128,9 @@
   --badb: #fde3e1;
   --bar-top: #4f8bf9;
   --bar-bot: #2563eb;
+  --bar-active-top: #3b82f6;
+  --bar-active-bot: #1d4ed8;
+  --bar-muted-top: #e0e7ff;
+  --bar-muted-bot: #c7d2fe;
 }
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card } from '../../components/ui/Card';
-import { Icon } from '../../components/ui/Icon';
 import { WeeklyBars } from '../../components/charts/WeeklyBars';
 import { Donut } from '../../components/charts/Donut';
 import { MapView } from '../../components/map/MapView';
@@ -35,51 +34,116 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   return (
     <div>
-      {/* 4 Asosiy Statistik Kartochka */}
-      <section className="sg">
-        <Card lift className="sc">
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d3df0)' }}>
-            <Icon name="users" />
+      {/* 4 Asosiy Statistik Kartochka (Toza va ixcham, faqat nomi va sanog'i) */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '18px',
+          marginBottom: '22px'
+        }}
+      >
+        <Card
+          lift
+          className="sc"
+          style={{
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            border: '1px solid var(--cb)',
+            transition: 'all 0.25s ease'
+          }}
+          onClick={() => onNavigate('foydalanuvchilar')}
+          title="Foydalanuvchilar bo‘limiga o‘tish"
+        >
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Jami foydalanuvchilar
           </div>
-          <div>
-            <div className="sm">Jami foydalanuvchilar</div>
-            <div className="v">{nf(overview.totalUsers)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--tx)', letterSpacing: '-0.5px' }}>
+            {nf(overview.totalUsers)}
           </div>
         </Card>
 
-        <Card lift className="sc">
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#22c9a0,#0e9f8f)' }}>
-            <Icon name="cal" />
+        <Card
+          lift
+          className="sc"
+          style={{
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            border: '1px solid var(--cb)',
+            transition: 'all 0.25s ease'
+          }}
+          onClick={() => onNavigate('tadbirlar')}
+          title="Tadbirlar ro‘yxatiga o‘tish"
+        >
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Jami tadbirlar
           </div>
-          <div>
-            <div className="sm">Jami tadbirlar</div>
-            <div className="v">{nf(overview.totalEvents)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--tx)', letterSpacing: '-0.5px' }}>
+            {nf(overview.totalEvents)}
           </div>
         </Card>
 
-        <Card lift className="sc">
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#c084fc,#a855f7)' }}>
-            <Icon name="user" />
+        <Card
+          lift
+          className="sc"
+          style={{
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            border: '1px solid var(--cb)',
+            transition: 'all 0.25s ease'
+          }}
+          onClick={() => onNavigate('foydalanuvchilar')}
+          title="Faol foydalanuvchilarni ko‘rish"
+        >
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            Faol foydalanuvchilar
           </div>
-          <div>
-            <div className="sm">Faol foydalanuvchilar</div>
-            <div className="v">{nf(overview.activeParticipants)}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--tx)', letterSpacing: '-0.5px' }}>
+            {nf(overview.activeParticipants)}
           </div>
         </Card>
 
-        <Card lift className="sc">
-          <div className="ico" style={{ background: 'linear-gradient(135deg,#38bdf8,#2563eb)' }}>
-            <Icon name="check" />
+        <Card
+          lift
+          className="sc"
+          style={{
+            minHeight: '110px',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            border: '1px solid var(--cb)',
+            transition: 'all 0.25s ease'
+          }}
+          onClick={() => onNavigate('tadbirlar')}
+          title="Tanlangan kun tadbirlari"
+        >
+          <div className="sm" style={{ fontWeight: 600, fontSize: '14px', color: 'var(--mut)' }}>
+            {selectedPreset === 'month'
+              ? `${monthNameUz} oyi tadbirlari`
+              : selectedDate === TODAY
+              ? 'Bugungi tadbirlar'
+              : `${fd(selectedDate)} tadbirlari`}
           </div>
-          <div>
-            <div className="sm">
-              {selectedPreset === 'month'
-                ? `${monthNameUz} oyi tadbirlari`
-                : selectedDate === TODAY
-                ? 'Bugungi tadbirlar'
-                : `${fd(selectedDate)} tadbirlari`}
-            </div>
-            <div className="v">{overview.todayEvents}</div>
+          <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--tx)', letterSpacing: '-0.5px' }}>
+            {overview.todayEvents}
           </div>
         </Card>
       </section>
@@ -88,15 +152,7 @@ export const DashboardPage: React.FC<DashboardProps> = ({ onNavigate }) => {
       <section className="c3">
         {/* 1. Haftalik Ro'yxatdan O'tganlar Ustunlari */}
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-            <h2 className="h">Haftalar bo‘yicha ro‘yxatdan o‘tgan yoshlar</h2>
-            <div className="sm lgd">
-              <span>
-                <i className="dot" style={{ background: 'var(--pri)' }} />
-                Ro‘yxatdan o‘tganlar
-              </span>
-            </div>
-          </div>
+          <h2 className="h">Haftalar bo‘yicha ro‘yxatdan o‘tgan yoshlar</h2>
           <WeeklyBars />
         </Card>
 

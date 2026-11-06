@@ -5,7 +5,7 @@ import { MapView } from '../../components/map/MapView';
 import { MahallaRanking } from '../../components/charts/MahallaRanking';
 import { mahallasApi } from '../../api/mahallas';
 import { apiClient } from '../../api/client';
-import { LOCS, MH, nf } from '../../utils/format';
+import { LOCS, MH, nf, fd, MN } from '../../utils/format';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 interface MahallaPageProps {
@@ -23,7 +23,11 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
   const [selectedPin, setSelectedPin] = useState(-1);
   const [sortBy, setSortBy] = useState<'r' | 'k' | 'avg'>('r');
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isAllTime, setIsAllTime] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+
+  const [dYear, dMonth] = selectedDate.split('-').map(Number);
+  const monthNameUz = MN[dMonth - 1] ? MN[dMonth - 1][0].toUpperCase() + MN[dMonth - 1].slice(1) : '';
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -39,14 +43,14 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || SORT_OPTIONS[0].label;
 
-  const mahallas = mahallasApi.getStats(sortBy, selectedDate, selectedPreset);
+  const mahallas = mahallasApi.getStats(sortBy, selectedDate, selectedPreset, isAllTime);
   const events = apiClient.getEvents();
 
   const isAll = selectedPin < 0 || selectedPin >= LOCS.length;
   const selectedMahalla = !isAll ? mahallas.find(m => m.i === selectedPin) : null;
-  const totalEventsCount = events.length;
-  const totalRegistered = mahallas.reduce((sum, m) => sum + m.r, 0);
-  const avgPerEvent = totalEventsCount > 0 ? Math.round(totalRegistered / totalEventsCount) : 0;
+  const displayedEventsCount = !isAll ? (selectedMahalla?.k || 0) : mahallas.reduce((sum, m) => sum + m.k, 0);
+  const displayedRegistered = !isAll ? (selectedMahalla?.r || 0) : mahallas.reduce((sum, m) => sum + m.r, 0);
+  const displayedAvg = displayedEventsCount > 0 ? Math.round(displayedRegistered / displayedEventsCount) : 0;
 
   return (
     <div
@@ -66,14 +70,67 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
             if (e.target === e.currentTarget) setSelectedPin(-1);
           }}
         >
-          <div style={{ marginBottom: '14px' }}>
-            <h2 className="h" style={{ margin: 0 }}>Mahallalar bo‘yicha faollik</h2>
-            <div className="sm" style={{ marginTop: '2px' }}>Tadbirlar va ro‘yxatdan o‘tgan yoshlar qamrovi</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+            <div>
+              <h2 className="h" style={{ margin: 0 }}>Mahallalar bo‘yicha faollik</h2>
+              <div className="sm" style={{ marginTop: '2px' }}>
+                {isAllTime
+                  ? 'Barcha davrlar bo‘yicha umumiy qamrov'
+                  : selectedPreset === 'month'
+                  ? `${monthNameUz} ${dYear} oyi bo‘yicha`
+                  : selectedPreset === 'year'
+                  ? `${dYear} yil bo‘yicha`
+                  : selectedPreset === 'all'
+                  ? 'Barcha davrlar bo‘yicha'
+                  : `${fd(selectedDate)} sanasi bo‘yicha`}
+              </div>
+            </div>
+
+            {/* Rejim almashtirgich (Segmented switcher: Sana bo'yicha / Umumiy) */}
+            <div style={{ display: 'inline-flex', background: 'var(--soft)', padding: '2px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <button
+                type="button"
+                onClick={() => setIsAllTime(false)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 0,
+                  fontSize: '11.5px',
+                  fontWeight: !isAllTime ? 600 : 500,
+                  cursor: 'pointer',
+                  background: !isAllTime ? 'var(--card)' : 'transparent',
+                  color: !isAllTime ? 'var(--pri)' : 'var(--mut)',
+                  boxShadow: !isAllTime ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Sana bo‘yicha
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAllTime(true)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 0,
+                  fontSize: '11.5px',
+                  fontWeight: isAllTime ? 600 : 500,
+                  cursor: 'pointer',
+                  background: isAllTime ? 'var(--card)' : 'transparent',
+                  color: isAllTime ? 'var(--pri)' : 'var(--mut)',
+                  boxShadow: isAllTime ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Umumiy
+              </button>
+            </div>
           </div>
 
           <MahallaRanking
             selectedPin={selectedPin}
             onSelectMahalla={idx => setSelectedPin(idx)}
+            forceAllTime={isAllTime}
           />
         </Card>
 
@@ -119,7 +176,7 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
                 <span className="pill s0" style={{ cursor: 'default' }}>
                   {!isAll
                     ? `${selectedMahalla ? selectedMahalla.k : 0} ta tadbir`
-                    : `${totalEventsCount} ta umumiy tadbir`}
+                    : `${displayedEventsCount} ta tadbir`}
                 </span>
               </div>
             </div>
@@ -128,19 +185,19 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
               <div>
                 <div className="sm">Jami tadbirlar</div>
                 <b style={{ fontSize: '16px', color: 'var(--tx)' }}>
-                  {!isAll ? (selectedMahalla?.k || 0) : totalEventsCount} ta
+                  {!isAll ? (selectedMahalla?.k || 0) : displayedEventsCount} ta
                 </b>
               </div>
               <div>
                 <div className="sm">Ro‘yxatdan o‘tganlar</div>
                 <b style={{ fontSize: '16px', color: 'var(--tx)' }}>
-                  {nf(!isAll ? (selectedMahalla?.r || 0) : totalRegistered)} nafar
+                  {nf(!isAll ? (selectedMahalla?.r || 0) : displayedRegistered)} nafar
                 </b>
               </div>
               <div>
                 <div className="sm">O‘rtacha qamrov</div>
                 <b style={{ fontSize: '16px', color: 'var(--pri)' }}>
-                  {!isAll ? (selectedMahalla?.avg || 0) : avgPerEvent} nafar / tadbir
+                  {!isAll ? (selectedMahalla?.avg || 0) : displayedAvg} nafar / tadbir
                 </b>
               </div>
             </div>

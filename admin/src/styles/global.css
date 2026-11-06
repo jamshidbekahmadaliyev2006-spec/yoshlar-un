@@ -69,6 +69,10 @@ a {
   color: #93a7c6;
 }
 
+.mobile-menu-toggle {
+  display: none;
+}
+
 .snav {
   display: flex;
   flex-direction: column;
@@ -1589,16 +1593,17 @@ select option,
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: min(340px, 94vw);
+  width: min(380px, calc(100vw - 20px));
+  box-sizing: border-box;
   background: var(--pop);
   border: 1px solid var(--cb);
   border-radius: 18px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-  padding: 16px;
+  padding: 14px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   animation: dpFadeIn 0.18s ease-out;
 }
 
@@ -1618,23 +1623,27 @@ select option,
 }
 
 .dp-presets-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dp-preset-btn {
-  flex: 1;
-  height: 32px;
-  border-radius: 9px;
+  height: 30px;
+  padding: 0 2px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--soft);
   color: var(--mut);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1714,6 +1723,8 @@ select option,
 
 .dp-main-content {
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
@@ -1722,7 +1733,10 @@ select option,
 
 .dp-calendar-pane {
   flex: 1;
-  padding: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1732,10 +1746,13 @@ select option,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
   gap: 6px;
 }
 
 .dp-nav-arrow {
+  flex-shrink: 0;
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -1759,12 +1776,15 @@ select option,
 .dp-selectors {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .dp-select {
   height: 28px;
-  padding: 0 8px;
+  padding: 0 6px;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -1774,6 +1794,7 @@ select option,
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s;
+  max-width: 120px;
 }
 
 .dp-select:focus {
@@ -1783,8 +1804,10 @@ select option,
 .dp-weekdays-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+  box-sizing: border-box;
   text-align: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .dp-weekday {
@@ -1793,16 +1816,23 @@ select option,
   color: var(--mut);
   text-transform: uppercase;
   padding: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dp-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 2px;
 }
 
 .dp-day-cell {
   height: 32px;
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 0;
   background: transparent;
@@ -1892,27 +1922,116 @@ select option,
 @media (max-width: 900px) {
   .shell {
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
   }
+
   .side {
-    width: auto;
+    width: 100%;
     height: auto;
     position: static;
-    padding: 14px;
+    padding: 12px 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--cb);
+    box-sizing: border-box;
   }
+
   .brand {
-    margin: 0 4px 12px;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .snav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 6px;
+
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
   }
+
+  .mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .snav.open {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    animation: dpFadeIn 0.2s ease-out;
+  }
+
+  .snav.closed {
+    display: none !important;
+  }
+
   .nav {
+    width: 100%;
+    box-sizing: border-box;
     margin: 0;
     padding: 10px 12px;
+    font-size: 13px;
+    gap: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+
+  .nav .i {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
   .main {
-    padding: 0 14px 24px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 12px 24px;
+    overflow-x: hidden;
+  }
+
+  .dg {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .g2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sg {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .c3 {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .top {
+    gap: 8px;
+    padding: 12px 0 14px;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
   }
 }
 
@@ -2488,19 +2607,34 @@ select option,
 
 /* AI Chat Jadval (Table) dizayni - Davlat va zamonaviy standart */
 .ai-chat-table-wrapper {
-  margin: 10px 0;
+  margin: 12px 0;
   border-radius: 10px;
   overflow-x: auto;
   border: 1px solid var(--line);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   background: var(--card);
   max-width: 100%;
+  scrollbar-width: thin;
+}
+
+.ai-chat-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ai-chat-table-wrapper::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 4px;
+}
+
+.ai-chat-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .ai-chat-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 12px;
   text-align: left;
 }
 

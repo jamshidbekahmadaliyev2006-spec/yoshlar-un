@@ -22,6 +22,8 @@ export type IntentType =
   | 'EVENTS_TOTAL'
   | 'EVENTS_RECENT'            // Oxirgi 30 kunda nechta tadbir
   | 'TOP_CATEGORY'             // Eng ko'p tadbir qaysi yo'nalishda
+  | 'EVENT_TYPES_BREAKDOWN'    // Tadbirlar turlari, foizlari, Donut analitikasi (bugun, aprel, jami)
+  | 'YOUTH_ROLES_BREAKDOWN'    // Yoshlar toifalari (talaba, sportchi, volontyor, bandlik, jins)
   | 'CATEGORY_PARTICIPATION'   // Sport / IT tadbirlarida qancha yosh qatnashgan
   | 'TOP_ATTENDED_EVENTS'      // Eng ko'p ishtirokchi qatnashgan 5 ta tadbir
   | 'AVERAGE_ATTENDANCE'       // Tadbirlarning o'rtacha davomat ko'rsatkichi
@@ -30,9 +32,11 @@ export type IntentType =
   | 'RELATIVE_PERIOD_STATS'    // O'tgan oy, shu oy, o'tgan hafta, shu hafta
   | 'PERIOD_OVERVIEW'          // 10 kunlik / davriy umumiy holat va dinamika
   | 'FOLLOW_UP_GROWTH'         // Avvalgi natijaga nisbatan o'sish qancha
-  | 'MAHALLAS_LIST'
+  | 'MAHALLAS_LIST'            // Mahallalar reytingi va qamrovi
   | 'STUDENTS_RATING'
   | 'RECENT_USERS_LIST'
+  | 'LOCATION_STATS'           // Xarita va lokatsiyalar bo'yicha ma'lumot
+  | 'PLATFORM_HOW_TO'          // Tizimdan foydalanish, boshqaruv, tadbir qo'shish, bloklash
   | 'GREETINGS'
   | 'GENERAL_QUERY';
 
@@ -49,6 +53,9 @@ export interface ParsedIntent {
   historicalUnit?: 'kun' | 'oy' | 'hafta' | 'yil';
   relativePeriod?: 'last_month' | 'this_month' | 'last_week' | 'this_week';
   relativeMetric?: 'users' | 'events' | 'all';
+  targetScope?: 'today' | 'yesterday' | 'april' | 'all' | 'selected' | 'custom' | string;
+  targetDate?: string;
+  selectedDateContext?: string;
   category?: string;
   limit?: number;
   wantsExcel: boolean;
@@ -57,6 +64,7 @@ export interface ParsedIntent {
   wantsTable: boolean;
   isFollowUp: boolean;
   lang: SupportedLang;
+  subTopic?: string;
 }
 
 export interface AIResponse {

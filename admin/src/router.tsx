@@ -6,6 +6,7 @@ import { EventsPage } from './pages/Events';
 import { EventFormPage } from './pages/EventForm';
 import { EventDetailsPage } from './pages/EventDetails';
 import { SettingsPage } from './pages/Settings';
+import { AppealsPage } from './pages/Appeals';
 
 interface RouterProps {
   currentRoute: string;
@@ -34,6 +35,8 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) =
       return <UsersPage />;
     case 'tadbirlar':
       return <EventsPage onNavigate={onNavigate} />;
+    case 'murojaatlar':
+      return <AppealsPage onNavigate={onNavigate} />;
     case 'sozlamalar':
       return <SettingsPage />;
     case 'dashboard':

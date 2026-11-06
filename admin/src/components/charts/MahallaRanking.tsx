@@ -6,11 +6,16 @@ import { useDateFilter } from '../../store/dateFilterStore';
 interface MahallaRankingProps {
   selectedPin?: number;
   onSelectMahalla?: (pinIndex: number) => void;
+  forceAllTime?: boolean;
 }
 
-export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onSelectMahalla }) => {
+export const MahallaRanking: React.FC<MahallaRankingProps> = ({
+  selectedPin,
+  onSelectMahalla,
+  forceAllTime = false
+}) => {
   const { selectedDate, selectedPreset } = useDateFilter();
-  const mahallas = mahallasApi.getStats('r', selectedDate, selectedPreset);
+  const mahallas = mahallasApi.getStats('r', selectedDate, selectedPreset, forceAllTime);
   const maxR = Math.max(...mahallas.map(m => m.r), 1);
 
   return (

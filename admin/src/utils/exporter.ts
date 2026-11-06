@@ -460,6 +460,93 @@ export const exportMahallasToWord = (
     return { success: true, count: stats.length, fileName: actualFileName };
   }
 
+  if (lang === 'en') {
+    const body = `
+      <div class="gov-emblem-row">★ ★ ★</div>
+      <div class="gov-header">
+        REPUBLIC OF UZBEKISTAN<br/>
+        YOUTH AFFAIRS AGENCY<br/>
+        TASHKENT CITY YUNUSOBOD DISTRICT DEPARTMENT
+      </div>
+      <div class="gov-sub">
+        100093, Tashkent city, Yunusobod district • Tel: +998 (71) 200-00-00 • E-mail: yunusobod@yoshlar.uz
+      </div>
+      <div class="gov-line"></div>
+
+      <table class="doc-meta-row">
+        <tr>
+          <td style="width: 50%;">November 03, 2026</td>
+          <td style="text-align: right; width: 50%;">Ref: ADM-YUN-2026/104-EN</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="font-size: 10pt; color: #333333;">Tashkent city</td>
+        </tr>
+      </table>
+
+      <div class="doc-title">OFFICIAL REPORT</div>
+      <div class="doc-subtitle">On youth engagement monitoring and completed events across Mahallas of Yunusobod District</div>
+
+      <p class="intro-p">
+        In accordance with state programs on youth policy, leisure management, and employment in Yunusobod district of Tashkent city, a total of <strong>${overview.totalUsers.toLocaleString('ru-RU')} young citizens</strong> are registered on the unified «Yunusobod — Birga» digital platform. The active youth ratio stands at <strong>${overview.activePct}%</strong> (${overview.activeParticipants.toLocaleString('ru-RU')} participants).
+      </p>
+
+      <p class="intro-p">
+        The table below provides a ranked performance breakdown of all neighborhood assemblies (mahallas) sorted <strong>starting from the most active mahallas</strong>:
+      </p>
+
+      <table class="gost-table">
+        <thead>
+          <tr>
+            <th class="header-th" style="width: 35px;">No</th>
+            <th class="header-th">Mahalla Name</th>
+            <th class="header-th" style="width: 85px;">Events Count</th>
+            <th class="header-th" style="width: 110px;">Youth Reached</th>
+            <th class="header-th" style="width: 90px;">Average Coverage</th>
+            <th class="header-th" style="width: 75px;">Status</th>
+          </tr>
+          <tr class="col-num-row">
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <table class="signature-table">
+        <tr>
+          <td style="width: 55%; font-weight: bold;">
+            Head of Yunusobod District<br/>Youth Affairs Department
+          </td>
+          <td style="width: 20%; text-align: center; vertical-align: bottom;">
+            ____________<br/>
+            <span style="font-size: 8pt; font-weight: normal;">(signature)</span>
+          </td>
+          <td style="width: 25%; text-align: right; font-weight: bold; vertical-align: bottom;">
+            A. K. Karimov
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <div class="seal-box">SEAL</div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="executor-note">
+        Executor: I. Rakhimov<br/>
+        Inquiry phone: +998 (71) 200-00-00
+      </div>
+    `;
+    downloadDoc(body, actualFileName);
+    return { success: true, count: stats.length, fileName: actualFileName };
+  }
+
   // Default Uzbek ГОСТ / Davlat standarti
   const body = `
     <div class="gov-emblem-row">★ ★ ★</div>
@@ -710,6 +797,91 @@ export const exportEventsToWord = (
       <div class="executor-note">
         Исполнитель: И. Рахимов<br/>
         Телефон для справок: +998 (71) 200-00-00
+      </div>
+    `;
+    downloadDoc(body, actualFileName);
+    return { success: true, count: events.length, fileName: actualFileName };
+  }
+
+  if (lang === 'en') {
+    const body = `
+      <div class="gov-emblem-row">★ ★ ★</div>
+      <div class="gov-header">
+        REPUBLIC OF UZBEKISTAN<br/>
+        YOUTH AFFAIRS AGENCY<br/>
+        TASHKENT CITY YUNUSOBOD DISTRICT DEPARTMENT
+      </div>
+      <div class="gov-sub">
+        100093, Tashkent city, Yunusobod district • Tel: +998 (71) 200-00-00 • E-mail: yunusobod@yoshlar.uz
+      </div>
+      <div class="gov-line"></div>
+
+      <table class="doc-meta-row">
+        <tr>
+          <td style="width: 50%;">November 03, 2026</td>
+          <td style="text-align: right; width: 50%;">Ref: YAA-YUN-2026/105-EN</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="font-size: 10pt; color: #333333;">Tashkent city</td>
+        </tr>
+      </table>
+
+      <div class="doc-title">OFFICIAL EVENTS REGISTER</div>
+      <div class="doc-subtitle">On youth events organized in Yunusobod district through the «Yunusobod — Birga» platform</div>
+
+      <p class="intro-p">
+        In accordance with the action plan of the Youth Affairs Agency in Yunusobod district, this official registry provides comprehensive data on <strong>${events.length} planned and executed events</strong> across culture, sport, IT education, and employment.
+      </p>
+
+      <table class="gost-table">
+        <thead>
+          <tr>
+            <th class="header-th" style="width: 35px;">No</th>
+            <th class="header-th" style="width: 110px;">Date & Time</th>
+            <th class="header-th">Event Title</th>
+            <th class="header-th" style="width: 95px;">Category</th>
+            <th class="header-th">Venue / Mahalla</th>
+            <th class="header-th" style="width: 85px;">Attendees</th>
+            <th class="header-th" style="width: 75px;">Status</th>
+          </tr>
+          <tr class="col-num-row">
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <table class="signature-table">
+        <tr>
+          <td style="width: 55%; font-weight: bold;">
+            Head of Yunusobod District<br/>Youth Affairs Department
+          </td>
+          <td style="width: 20%; text-align: center; vertical-align: bottom;">
+            ____________<br/>
+            <span style="font-size: 8pt; font-weight: normal;">(signature)</span>
+          </td>
+          <td style="width: 25%; text-align: right; font-weight: bold; vertical-align: bottom;">
+            A. K. Karimov
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <div class="seal-box">SEAL</div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="executor-note">
+        Executor: I. Rakhimov<br/>
+        Inquiry phone: +998 (71) 200-00-00
       </div>
     `;
     downloadDoc(body, actualFileName);
@@ -967,6 +1139,91 @@ export const exportUsersToWord = (
       <div class="executor-note">
         Исполнитель: И. Рахимов<br/>
         Телефон для справок: +998 (71) 200-00-00
+      </div>
+    `;
+    downloadDoc(body, actualFileName);
+    return { success: true, count: users.length, fileName: actualFileName };
+  }
+
+  if (lang === 'en') {
+    const body = `
+      <div class="gov-emblem-row">★ ★ ★</div>
+      <div class="gov-header">
+        REPUBLIC OF UZBEKISTAN<br/>
+        YOUTH AFFAIRS AGENCY<br/>
+        TASHKENT CITY YUNUSOBOD DISTRICT DEPARTMENT
+      </div>
+      <div class="gov-sub">
+        100093, Tashkent city, Yunusobod district • Tel: +998 (71) 200-00-00 • E-mail: yunusobod@yoshlar.uz
+      </div>
+      <div class="gov-line"></div>
+
+      <table class="doc-meta-row">
+        <tr>
+          <td style="width: 50%;">November 03, 2026</td>
+          <td style="text-align: right; width: 50%;">Ref: YAA-YUN-2026/106-EN</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="font-size: 10pt; color: #333333;">Tashkent city</td>
+        </tr>
+      </table>
+
+      <div class="doc-title">OFFICIAL REGISTRY</div>
+      <div class="doc-subtitle">On registered youth in Yunusobod district via «Yunusobod — Birga» digital platform</div>
+
+      <p class="intro-p">
+        In accordance with the State Program on Youth Policy in Yunusobod district of Tashkent city, this document certifies the demographic and registration profile of <strong>${users.length.toLocaleString('ru-RU')} registered young citizens</strong>.
+      </p>
+
+      <table class="gost-table">
+        <thead>
+          <tr>
+            <th class="header-th" style="width: 35px;">No</th>
+            <th class="header-th">Participant Full Name</th>
+            <th class="header-th" style="width: 120px;">Phone Number</th>
+            <th class="header-th">Mahalla</th>
+            <th class="header-th" style="width: 100px;">Role / Category</th>
+            <th class="header-th" style="width: 85px;">Registration Date</th>
+            <th class="header-th" style="width: 75px;">Status</th>
+          </tr>
+          <tr class="col-num-row">
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <table class="signature-table">
+        <tr>
+          <td style="width: 55%; font-weight: bold;">
+            Head of Yunusobod District<br/>Youth Affairs Department
+          </td>
+          <td style="width: 20%; text-align: center; vertical-align: bottom;">
+            ____________<br/>
+            <span style="font-size: 8pt; font-weight: normal;">(signature)</span>
+          </td>
+          <td style="width: 25%; text-align: right; font-weight: bold; vertical-align: bottom;">
+            A. K. Karimov
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <div class="seal-box">SEAL</div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="executor-note">
+        Executor: I. Rakhimov<br/>
+        Inquiry phone: +998 (71) 200-00-00
       </div>
     `;
     downloadDoc(body, actualFileName);

@@ -153,12 +153,6 @@ export const AIChatWidget: React.FC = () => {
       .replace(/\|\s*narxi\s*\|/gi, '| Izoh |')
       .replace(/\|\s*qisqacha tavsif\s*\|/gi, '| Holati |');
 
-    // 2. Bir qatorga yopishib qolgan markdown jadvallarini to'g'irlash (mavjud to'g'ri jadvallarni buzmasdan):
-    sanitized = sanitized.replace(/(\|[^\n|]+)\s*\|\s*([-:]{3,}(?:\s*\|\s*[-:]{3,})+)\s*\|/g, '$1|\n| $2 |');
-    sanitized = sanitized.replace(/(\|[-:\s|]+)\s*\|\s*(\d+\s*\|)/g, '$1\n| $2');
-    sanitized = sanitized.replace(/(\|[^\n|]+)\|\s*(\d+\s*\|)/g, '$1|\n| $2');
-    sanitized = sanitized.replace(/\n\s*\|{1,2}[^\n|]*$/g, '');
-
     const lines = sanitized.split('\n');
     const elements: React.ReactNode[] = [];
 
@@ -176,6 +170,25 @@ export const AIChatWidget: React.FC = () => {
       });
     };
 
+    const isTableSeparator = (str: string) => {
+      const s = str.trim();
+      return /^\|?[\s\-:+|]{3,}\|?$/.test(s) && (s.includes('-') || s.includes(':'));
+    };
+
+    const isTableRow = (str: string) => {
+      const s = str.trim();
+      if (!s) return false;
+      if (isTableSeparator(s)) return true;
+      return s.includes('|');
+    };
+
+    const parseCells = (rowText: string): string[] => {
+      let trimmed = rowText.trim();
+      if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
+      if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1);
+      return trimmed.split('|').map(c => c.trim());
+    };
+
     let i = 0;
     while (i < lines.length) {
       const rawLine = lines[i];
@@ -187,72 +200,48 @@ export const AIChatWidget: React.FC = () => {
         continue;
       }
 
-      // 1. Markdown jadvali aniqlash (| Col 1 | Col 2 | ... yoki 1 | Col 1 | ...)
-      const isTableStart = line.startsWith('|') || /^(?:№|No|T\/r|\d+)\s*\|/i.test(line);
-      if (isTableStart) {
-        const tableLines: string[] = [];
+      // 1. Markdown jadvalini aniqlash va to'liq HTML table formatida render qilish
+      if (isTableRow(line)) {
         let cur = i;
-        while (cur < lines.length) {
-          let tl = lines[cur].trim();
-          if (!tl) break;
-          // Agar qator boshidagi | tushib qolgan bo'lsa, uni qo'shamiz
-          if (!tl.startsWith('|') && (/^\d+\s*\|/.test(tl) || /^(?:№|No|T\/r)\s*\|/i.test(tl))) {
-            tl = '| ' + tl;
-          }
-          if (!tl.startsWith('|')) break;
-          if (!tl.endsWith('|')) {
-            tl = tl + ' |';
-          }
-          tableLines.push(tl);
+        const tableBlockLines: string[] = [];
+        while (cur < lines.length && isTableRow(lines[cur])) {
+          tableBlockLines.push(lines[cur].trim());
           cur++;
         }
 
-        if (tableLines.length >= 2) {
-          // Birinchi qator: Header ustunlar
-          const headerCells = tableLines[0].split('|').slice(1, -1).map(c => c.trim());
+        const nonSeparators = tableBlockLines.filter(l => !isTableSeparator(l));
+        if (nonSeparators.length >= 2) {
+          const headerCells = parseCells(nonSeparators[0]);
+          const dataRows = nonSeparators.slice(1).map(parseCells).filter(r => r.length >= 2);
 
-          // Separator qatorlarini aniqlash va o'tkazib yuborish
-          let dataStartIndex = 1;
-          while (dataStartIndex < tableLines.length) {
-            const rowCells = tableLines[dataStartIndex].split('|').slice(1, -1).map(c => c.trim());
-            const isSeparator = rowCells.length > 0 && rowCells.every(c => /^[-:\s]*$/.test(c));
-            if (isSeparator) {
-              dataStartIndex++;
-            } else {
-              break;
-            }
-          }
-
-          const dataRows = tableLines.slice(dataStartIndex).map(tl =>
-            tl.split('|').slice(1, -1).map(c => c.trim())
-          ).filter(row => 
-            row.length > 0 && 
-            !row.every(cell => /^[-:\s]*$/.test(cell)) &&
-            row.some(cell => cell.length > 0)
-          );
-
-          if (dataRows.length > 0) {
+          if (headerCells.length >= 2 && dataRows.length > 0) {
             i = cur;
             elements.push(
               <div key={`table-${i}`} className="ai-chat-table-wrapper">
                 <table className="ai-chat-table">
                   <thead>
                     <tr>
-                      {headerCells.map((h, hIdx) => (
-                        <th key={hIdx} className={hIdx === 0 ? 'ai-th-num' : ''}>
-                          {formatInline(h)}
-                        </th>
-                      ))}
+                      {headerCells.map((h, hIdx) => {
+                        const isNumCol = hIdx === 0 || /^(№|no|#|t\/r)$/i.test(h);
+                        return (
+                          <th key={hIdx} className={isNumCol ? 'ai-th-num' : ''}>
+                            {formatInline(h)}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
                     {dataRows.map((row, rIdx) => (
                       <tr key={rIdx}>
-                        {row.map((cell, cIdx) => (
-                          <td key={cIdx} className={cIdx === 0 ? 'ai-td-num' : ''}>
-                            {formatInline(cell)}
-                          </td>
-                        ))}
+                        {row.map((cell, cIdx) => {
+                          const isNumCol = cIdx === 0 || (/^\d+$/.test(cell) && cIdx === 0);
+                          return (
+                            <td key={cIdx} className={isNumCol ? 'ai-td-num' : ''}>
+                              {formatInline(cell)}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>

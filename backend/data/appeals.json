@@ -1,0 +1,30 @@
+[
+  {
+    "id": 3,
+    "userName": "Madina Qodirova",
+    "phone": "+998 97 123 99 88",
+    "mahalla": "Chinor mahallasi",
+    "category": "Iqtidorli yoshlar",
+    "subject": "Xorijiy tillar (IELTS) bo‘yicha tuman stipendiyasi tanlovi",
+    "text": "Salom! Chinor mahallasidan murojaat qilyapman. Menda IELTS 7.5 sertifikati bor. Tumanimizda iqtidorli talabalar va xorijiy tillarni o‘rganuvchilar uchun grant yoki stipendiya tanlovlari qachon o‘tkaziladi?",
+    "createdAt": "05.11.2026, 16:20",
+    "status": "answered",
+    "replyText": "Assalomu alaykum! Taklifingiz uchun tashakkur. Mutasaddi tashkilotlar bilan birgalikda o‘rganib chiqilib, natijasi ma’lum qilinadi.",
+    "repliedAt": "06.11.2026, 19:00",
+    "repliedBy": "Admin (Administrator)"
+  },
+  {
+    "id": 4,
+    "userName": "Javlonbek Karimov",
+    "phone": "+998 91 333 44 55",
+    "mahalla": "Bodomzor mahallasi",
+    "category": "Bandlik va startaplar",
+    "subject": "Yosh muhandislar startap grant tanlovi natijalari",
+    "text": "Assalomu alaykum! Yoshlar ishlari agentligi tomonidan o‘tkazilgan tuman startap loyihalari tanloviga biznes rejamni topshirgandim. Natijalar qayerda va qachon e’lon qilinadi?",
+    "createdAt": "04.11.2026, 10:05",
+    "status": "answered",
+    "replyText": "Salom, Javlonbek! Tanlov komissiyasi barcha arizalarni ko‘rib chiqdi. Natijalar 10-noyabr kuni platformamizning «Tadbirlar» bo‘limida va Yunusobod tumani hokimligining rasmiy kanalida e’lon qilinadi. Sizga muvaffaqiyat tilaymiz!",
+    "repliedAt": "04.11.2026, 14:30",
+    "repliedBy": "Admin (Yunusobod Yoshlar bo‘limi)"
+  }
+]

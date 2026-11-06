@@ -27,8 +27,210 @@ export interface AttendedEvent {
 }
 
 export class AIDataEngine {
-  // Asia/Tashkent hisoblash nuqtasi: 2026-yil 4-noyabr
-  public static readonly CURRENT_DATE = new Date(2026, 10, 4); // 04.11.2026
+  public static get CURRENT_DATE(): Date {
+    return new Date();
+  }
+
+  public static pad(n: number | string): string {
+    return String(n).padStart(2, '0');
+  }
+
+  public static getTodayISO(): string {
+    const d = this.CURRENT_DATE;
+    return `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`;
+  }
+
+  public static getTodayFormatted(): string {
+    const d = this.CURRENT_DATE;
+    return `${this.pad(d.getDate())}.${this.pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+  }
+
+  public static getYesterdayISO(): string {
+    const d = this.CURRENT_DATE;
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`;
+  }
+
+  public static getYesterdayFormatted(): string {
+    const d = this.CURRENT_DATE;
+    d.setDate(d.getDate() - 1);
+    return `${this.pad(d.getDate())}.${this.pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+  }
+
+  public static readonly EVENT_CATEGORIES = [
+    'Sport',
+    'Madaniy',
+    'Ta’lim',
+    'Ishga joylashish',
+    'Volontyorlik',
+    'Boshqa'
+  ];
+
+  public static generateEvents() {
+    const today = this.CURRENT_DATE;
+    const curYear = today.getFullYear();
+    const curMonth = today.getMonth() + 1;
+    const curDay = today.getDate();
+    const todayISO = `${curYear}-${this.pad(curMonth)}-${this.pad(curDay)}`;
+
+    const POOL = [
+      ['Futbol musobaqasi', 'Voleybol turniri', 'Shaxmat turniri', 'Yugurish marafoni', 'Stol tennisi musobaqasi'],
+      ['Musiqa festivali', 'Ko‘rgazma ochilishi', 'Teatr kechasi', 'She’riyat kechasi'],
+      ['IT kurslari (Frontend)', 'Ingliz tili darsi', 'Karyera yo‘li ma’ruzasi', 'Robototexnika mashg‘uloti'],
+      ['Ishga joylashish yarmarkasi', 'Rezyume ustaxonasi', 'Ish beruvchilar bilan uchrashuv'],
+      ['Volontyorlik aksiyasi', 'Ko‘chat ekish aksiyasi', 'Hududni tozalash aksiyasi'],
+      ['Yoshlar uchrashuvi', 'Muhokama klubi']
+    ];
+
+    const typeOf = (i: number) => {
+      const r = (i * 37) % 100;
+      return r < 38 ? 0 : r < 62 ? 1 : r < 77 ? 2 : r < 89 ? 3 : r < 96 ? 4 : 5;
+    };
+
+    const events: {
+      id: number;
+      t: number;
+      category: string;
+      title: string;
+      date: string;
+      going: number;
+      came: number;
+    }[] = [];
+
+    let n0 = 1;
+    for (let month = 1; month <= curMonth; month++) {
+      const daysInMonth = new Date(curYear, month, 0).getDate();
+      const maxDay = (month === curMonth) ? curDay : daysInMonth;
+      for (let day = 1; day <= maxDay; day++) {
+        const dateStr = `${curYear}-${this.pad(month)}-${this.pad(day)}`;
+        if (dateStr > todayISO) continue;
+
+        const count = 1 + ((day * 7 + month * 13) % 3);
+        for (let k = 0; k < count; k++, n0++) {
+          const t = (typeOf(n0 * 7 + day + month) + k * 2) % this.EVENT_CATEGORIES.length;
+          const p = POOL[t] || POOL[0];
+          const going = 35 + ((n0 * 19 + month * 7) % 180);
+          const rate = 0.65 + ((n0 * 11 + month * 3) % 25) / 100;
+          const came = Math.round(going * rate);
+          events.push({
+            id: n0,
+            t,
+            category: this.EVENT_CATEGORIES[t],
+            title: p[(n0 + day + month) % p.length],
+            date: dateStr,
+            going,
+            came
+          });
+        }
+      }
+    }
+    return events;
+  }
+
+  public static async getEventBreakdown(params: {
+    targetDate?: string;
+    targetScope?: string;
+    selectedDateContext?: string;
+  }) {
+    const allEvents = this.generateEvents();
+    const todayISO = this.getTodayISO();
+    const yesterdayISO = this.getYesterdayISO();
+
+    let pool = allEvents;
+    let targetDate = params.targetDate;
+    let scope = params.targetScope || 'all';
+    let isDayView = false;
+    let dateLabel = '';
+
+    if (targetDate) {
+      pool = allEvents.filter(e => e.date === targetDate);
+      isDayView = true;
+      const [y, m, d] = targetDate.split('-');
+      const MN_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+      dateLabel = `${+d}-${MN_UZ[+m - 1]} ${y}`;
+    } else if (scope === 'today') {
+      targetDate = todayISO;
+      pool = allEvents.filter(e => e.date === todayISO);
+      isDayView = true;
+      const [y, m, d] = todayISO.split('-');
+      const MN_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+      dateLabel = `${+d}-${MN_UZ[+m - 1]} ${y} (bugun)`;
+    } else if (scope === 'yesterday') {
+      targetDate = yesterdayISO;
+      pool = allEvents.filter(e => e.date === yesterdayISO);
+      isDayView = true;
+      const [y, m, d] = yesterdayISO.split('-');
+      const MN_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+      dateLabel = `${+d}-${MN_UZ[+m - 1]} ${y} (kecha)`;
+    } else if (scope === 'april') {
+      pool = allEvents.filter(e => e.date.startsWith('2026-04'));
+      isDayView = false;
+      dateLabel = 'Aprel 2026';
+    } else if (scope === 'selected' && params.selectedDateContext) {
+      targetDate = params.selectedDateContext;
+      pool = allEvents.filter(e => e.date === targetDate);
+      isDayView = true;
+      const [y, m, d] = targetDate.split('-');
+      const MN_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+      dateLabel = `${+d}-${MN_UZ[+m - 1]} ${y}`;
+    } else {
+      pool = allEvents;
+      isDayView = false;
+      dateLabel = 'Platforma ishga tushgandan beri';
+    }
+
+    const total = pool.length;
+    const categoryStats = this.EVENT_CATEGORIES.map((cat, idx) => {
+      const count = pool.filter(e => e.t === idx).length;
+      return {
+        name: cat,
+        count,
+        percent: total > 0 ? Math.round((count / total) * 100) : 0,
+        events: pool.filter(e => e.t === idx).map(e => e.title)
+      };
+    });
+
+    const nonZeroCategories = categoryStats.filter(c => c.count > 0);
+    const topCategory = nonZeroCategories.length > 0
+      ? [...nonZeroCategories].sort((a, b) => b.count - a.count)[0]
+      : { name: 'Mavjud emas', count: 0, percent: 0, events: [] };
+
+    // Also get selected date's stat if different from targetDate
+    let selectedDateInfo: { date: string; label: string; total: number; topCat: string; topPct: number } | null = null;
+    if (params.selectedDateContext && params.selectedDateContext !== targetDate) {
+      const selPool = allEvents.filter(e => e.date === params.selectedDateContext);
+      const [sy, sm, sd] = params.selectedDateContext.split('-');
+      const MN_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+      const selLabel = `${+sd}-${MN_UZ[+sm - 1]} ${sy}`;
+      const selCategories = this.EVENT_CATEGORIES.map((cat, idx) => {
+        const count = selPool.filter(e => e.t === idx).length;
+        return { name: cat, count, percent: selPool.length > 0 ? Math.round((count / selPool.length) * 100) : 0 };
+      }).filter(c => c.count > 0);
+      const selTop = selCategories.length > 0 ? selCategories[0] : { name: '-', percent: 0 };
+      selectedDateInfo = {
+        date: params.selectedDateContext,
+        label: selLabel,
+        total: selPool.length,
+        topCat: selTop.name,
+        topPct: selTop.percent
+      };
+    }
+
+    return {
+      total,
+      targetDate,
+      isDayView,
+      dateLabel,
+      scope,
+      categoryStats,
+      nonZeroCategories,
+      topCategory,
+      sampleEvents: pool.slice(0, 5),
+      todayISO,
+      selectedDateContext: params.selectedDateContext,
+      selectedDateInfo
+    };
+  }
 
   /**
    * 1. Jami yoshlar va ularning statuslari (Active, Inactive, Blocked)
@@ -171,7 +373,7 @@ export class AIDataEngine {
    * 3.1. Tarixiy ko'rsatkich (N kun / oy oldin nechta foydalanuvchi bo'lgan)
    */
   static async getHistoricalUserCount(amount: number = 10, unit: 'kun' | 'oy' | 'hafta' | 'yil' = 'kun') {
-    const today = new Date(2026, 10, 4); // 04.11.2026
+    const today = this.CURRENT_DATE;
     const pastDate = new Date(today);
 
     let daysAgo = 10;
@@ -218,6 +420,11 @@ export class AIDataEngine {
    * 3.2. Nisbiy davrlar bo'yicha ko'rsatkichlar (O'tgan oy, shu oy, o'tgan hafta, shu hafta)
    */
   static async getRelativePeriodData(period: 'last_month' | 'this_month' | 'last_week' | 'this_week') {
+    const d = this.CURRENT_DATE;
+    const dayOfWeek = (d.getDay() + 6) % 7;
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - dayOfWeek);
+
     if (period === 'last_month') {
       return {
         periodName: 'Oktyabr 2026 (O‘tgan oy)',
@@ -229,13 +436,14 @@ export class AIDataEngine {
       };
     }
     if (period === 'this_month') {
+      const daysCount = d.getDate();
       return {
-        periodName: 'Noyabr 2026 (Joriy oy, 04.11 holatiga)',
-        usersJoined: 132,
-        eventsCount: 14,
-        participants: 1357,
+        periodName: `Noyabr 2026 (Joriy oy, ${this.pad(d.getDate())}.${this.pad(d.getMonth() + 1)} holatiga)`,
+        usersJoined: Math.round(daysCount * 33),
+        eventsCount: 14 + Math.round((daysCount - 4) * 2),
+        participants: 1357 + Math.round((daysCount - 4) * 180),
         activeRate: 87,
-        note: 'Dastlabki 4 kunlik ko‘rsatkich'
+        note: `Dastlabki ${daysCount} kunlik ko‘rsatkich`
       };
     }
     if (period === 'last_week') {
@@ -248,13 +456,14 @@ export class AIDataEngine {
         note: '7 kunlik umumiy qamrov'
       };
     }
+    const daysInCurrentWeek = dayOfWeek + 1;
     return {
-      periodName: 'Shu hafta (02.11 — 04.11.2026)',
-      usersJoined: 99,
-      eventsCount: 8,
-      participants: 680,
+      periodName: `Shu hafta (${this.pad(mon.getDate())}.${this.pad(mon.getMonth() + 1)} — ${this.pad(d.getDate())}.${this.pad(d.getMonth() + 1)}.${d.getFullYear()})`,
+      usersJoined: Math.round(daysInCurrentWeek * 33),
+      eventsCount: 8 + Math.round((daysInCurrentWeek - 3) * 2),
+      participants: 680 + Math.round((daysInCurrentWeek - 3) * 150),
       activeRate: 87,
-      note: 'Hafta boshidagi 3 kunlik ko‘rsatkich'
+      note: `Hafta boshidagi ${daysInCurrentWeek} kunlik ko‘rsatkich`
     };
   }
 
@@ -412,6 +621,8 @@ export class AIDataEngine {
    * 9. O'tgan oy va shu oyni taqqoslash (Oktyabr 2026 vs Noyabr 2026)
    */
   static async compareMonths() {
+    const d = this.CURRENT_DATE;
+    const daysCount = d.getDate();
     const lastMonth = {
       name: 'Oktyabr 2026',
       usersJoined: 1023,
@@ -421,17 +632,17 @@ export class AIDataEngine {
     };
 
     const currentMonth = {
-      name: 'Noyabr 2026 (04.11 holatiga)',
-      usersJoined: 132, // oy boshidagi 4 kun
-      eventsHeld: 14,
+      name: `Noyabr 2026 (${this.pad(d.getDate())}.${this.pad(d.getMonth() + 1)} holatiga)`,
+      usersJoined: Math.round(daysCount * 33),
+      eventsHeld: 14 + Math.round((daysCount - 4) * 2),
       activeRate: 87,
-      participants: 1357
+      participants: 1357 + Math.round((daysCount - 4) * 180)
     };
 
     return {
       lastMonth,
       currentMonth,
-      conclusion: 'Oktyabr to‘liq oy hisoboti bo‘yicha 1 023 nafar yangi yoshlar qamrab olingan. Noyabr oyining dastlabki 4 kunida 132 nafar yoshlar qo‘shilib, 14 ta tadbir o‘tkazilmoqda.'
+      conclusion: `Oktyabr to‘liq oy hisoboti bo‘yicha 1 023 nafar yangi yoshlar qamrab olingan. Noyabr oyining dastlabki ${daysCount} kunida ${currentMonth.usersJoined} nafar yoshlar qo‘shilib, ${currentMonth.eventsHeld} ta tadbir o‘tkazilmoqda.`
     };
   }
 
