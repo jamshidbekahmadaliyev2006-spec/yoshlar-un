@@ -3,12 +3,12 @@ import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { usersApi } from '../../api/users';
 import { UserItem } from '../../types';
-import { SN, MH, TODAY, nf } from '../../utils/format';
+import { SN, MH, TODAY, nf, pad } from '../../utils/format';
 import { showToast } from '../../components/ui/Toast';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 export const UsersPage: React.FC = () => {
-  const { selectedDate } = useDateFilter();
+  const { selectedDate, selectedPreset } = useDateFilter();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -28,8 +28,12 @@ export const UsersPage: React.FC = () => {
   const allUsers = usersApi.getAll();
   const activeCount = allUsers.filter(u => u.s === 0).length;
   const blockedCount = allUsers.filter(u => u.s === 2).length;
+  const [dYear, dMonth] = selectedDate.split('-').map(Number);
+  const monthSuffix = `.${pad(dMonth)}.${dYear}`;
   const dateFormatted = selectedDate.split('-').reverse().join('.');
-  const dateNewCount = allUsers.filter(u => u.d === dateFormatted).length;
+  const isDateMatch = (userDate: string) =>
+    selectedPreset === 'month' ? userDate.endsWith(monthSuffix) : userDate === dateFormatted;
+  const dateNewCount = allUsers.filter(u => isDateMatch(u.d)).length;
 
   const filteredUsers = useMemo(() => {
     let list = usersApi.getAll(query);
@@ -38,10 +42,10 @@ export const UsersPage: React.FC = () => {
     } else if (statusFilter === 'blocked') {
       list = list.filter(u => u.s === 2);
     } else if (statusFilter === 'new') {
-      list = list.filter(u => u.d === dateFormatted);
+      list = list.filter(u => isDateMatch(u.d));
     }
     return list;
-  }, [query, statusFilter, dateFormatted, rerender]);
+  }, [query, statusFilter, selectedDate, selectedPreset, rerender]);
 
   const total = filteredUsers.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));

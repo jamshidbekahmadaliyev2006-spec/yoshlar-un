@@ -19,7 +19,7 @@ const SORT_OPTIONS: { value: 'r' | 'k' | 'avg'; label: string }[] = [
 ];
 
 export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
-  const { selectedDate } = useDateFilter();
+  const { selectedDate, selectedPreset } = useDateFilter();
   const [selectedPin, setSelectedPin] = useState(-1);
   const [sortBy, setSortBy] = useState<'r' | 'k' | 'avg'>('r');
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -39,7 +39,7 @@ export const MahallaPage: React.FC<MahallaPageProps> = ({ onNavigate }) => {
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || SORT_OPTIONS[0].label;
 
-  const mahallas = mahallasApi.getStats(sortBy, selectedDate);
+  const mahallas = mahallasApi.getStats(sortBy, selectedDate, selectedPreset);
   const events = apiClient.getEvents();
 
   const isAll = selectedPin < 0 || selectedPin >= LOCS.length;

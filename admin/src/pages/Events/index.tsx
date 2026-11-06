@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { eventsApi } from '../../api/events';
-import { TYPES, COL, LOCS, fd } from '../../utils/format';
+import { TYPES, COL, LOCS, fd, MN } from '../../utils/format';
 import { useDateFilter } from '../../store/dateFilterStore';
 
 interface EventsPageProps {
@@ -10,16 +10,30 @@ interface EventsPageProps {
 }
 
 export const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
-  const { selectedDate } = useDateFilter();
+  const { selectedDate, selectedPreset, startDate, endDate } = useDateFilter();
   const [query, setQuery] = useState('');
   const [type, setType] = useState('');
   const [filterByDate, setFilterByDate] = useState(true);
   const [limit, setLimit] = useState(12);
 
+  const [y, m] = selectedDate.split('-').map(Number);
+  const monthNameUz = MN[m - 1] ? MN[m - 1][0].toUpperCase() + MN[m - 1].slice(1) : '';
+
   const registered = eventsApi.getRegistered();
   const rawEvents = eventsApi.getAll(query, type);
   const events = filterByDate
-    ? rawEvents.filter(e => e.date === selectedDate)
+    ? rawEvents.filter(e => {
+        if (selectedPreset === 'month') {
+          return e.date.slice(0, 7) === selectedDate.slice(0, 7);
+        }
+        if (selectedPreset === 'year') {
+          return e.date.startsWith(String(y));
+        }
+        if (startDate && endDate && startDate !== endDate) {
+          return e.date >= startDate && e.date <= endDate;
+        }
+        return e.date === selectedDate;
+      })
     : rawEvents;
   const visibleEvents = events.slice(0, limit);
 
@@ -69,10 +83,22 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
             setLimit(12);
           }}
           style={{ height: '42px', padding: '0 16px', gap: '8px' }}
-          title={filterByDate ? 'Barcha sanalarni ko‘rsatish' : `Faqat ${fd(selectedDate)} tadbirlarini ko‘rsatish`}
+          title={
+            filterByDate
+              ? 'Barcha sanalarni ko‘rsatish'
+              : selectedPreset === 'month'
+              ? `Faqat ${monthNameUz} oyi tadbirlarini ko‘rsatish`
+              : `Faqat ${fd(selectedDate)} tadbirlarini ko‘rsatish`
+          }
         >
           <Icon name="cal" />
-          <span>{filterByDate ? fd(selectedDate) : 'Barcha sanalar'}</span>
+          <span>
+            {filterByDate
+              ? selectedPreset === 'month'
+                ? `${monthNameUz} ${y}`
+                : fd(selectedDate)
+              : 'Barcha sanalar'}
+          </span>
         </button>
 
         <button
@@ -87,7 +113,10 @@ export const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
         <span>{events.length} ta tadbir topildi</span>
         {filterByDate && (
           <span style={{ color: 'var(--pri)', fontWeight: 600 }}>
-            · {fd(selectedDate)} sanasi bo‘yicha
+            ·{' '}
+            {selectedPreset === 'month'
+              ? `${monthNameUz} ${y} oyi bo‘yicha`
+              : `${fd(selectedDate)} sanasi bo‘yicha`}
           </span>
         )}
       </div>

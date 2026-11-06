@@ -9,8 +9,8 @@ interface MahallaRankingProps {
 }
 
 export const MahallaRanking: React.FC<MahallaRankingProps> = ({ selectedPin, onSelectMahalla }) => {
-  const { selectedDate } = useDateFilter();
-  const mahallas = mahallasApi.getStats('r', selectedDate);
+  const { selectedDate, selectedPreset } = useDateFilter();
+  const mahallas = mahallasApi.getStats('r', selectedDate, selectedPreset);
   const maxR = Math.max(...mahallas.map(m => m.r), 1);
 
   return (

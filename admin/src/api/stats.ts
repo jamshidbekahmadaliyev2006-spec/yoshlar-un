@@ -1,8 +1,8 @@
 import { apiClient } from './client';
-import { TODAY, TYPES, COL, pad } from '../utils/format';
+import { TODAY, TYPES, COL, pad, MN, fd } from '../utils/format';
 
 export const statsApi = {
-  getOverview: (selectedDate = TODAY) => {
+  getOverview: (selectedDate = TODAY, selectedPreset = 'today') => {
     const events = apiClient.getEvents();
     const users = apiClient.getUsers();
 
@@ -10,9 +10,19 @@ export const statsApi = {
     const prevDate = new Date(y, m - 1, d - 1);
     const yesterdayStr = `${prevDate.getFullYear()}-${pad(prevDate.getMonth() + 1)}-${pad(prevDate.getDate())}`;
 
-    // Bugungi va kechagi kun tadbirlari soni
-    const todayEvents = events.filter(e => e.date === selectedDate).length;
-    const yesterdayEvents = events.filter(e => e.date === yesterdayStr).length;
+    const isMonth = selectedPreset === 'month';
+    const monthPrefix = selectedDate.slice(0, 7);
+    const prevMonthDate = new Date(y, m - 2, 1);
+    const prevMonthPrefix = `${prevMonthDate.getFullYear()}-${pad(prevMonthDate.getMonth() + 1)}`;
+
+    // Bugungi va kechagi kun (yoki oylik tanlangan bo'lsa bu oy va o'tgan oy) tadbirlari soni
+    const todayEvents = isMonth
+      ? events.filter(e => e.date.slice(0, 7) === monthPrefix).length
+      : events.filter(e => e.date === selectedDate).length;
+
+    const yesterdayEvents = isMonth
+      ? events.filter(e => e.date.slice(0, 7) === prevMonthPrefix).length
+      : events.filter(e => e.date === yesterdayStr).length;
 
     let diffPct = 0;
     if (yesterdayEvents > 0) {
@@ -36,7 +46,10 @@ export const statsApi = {
       : 0;
 
     // Tanlangan sanagacha o'tkazilgan tadbirlar ulushi
-    const eventsToDate = events.filter(e => e.date <= selectedDate).length;
+    const eventsToDate = isMonth
+      ? events.filter(e => e.date.slice(0, 7) <= monthPrefix).length
+      : events.filter(e => e.date <= selectedDate).length;
+
     const eventsProgressPct = events.length > 0
       ? Math.round((eventsToDate / events.length) * 100)
       : 0;
@@ -57,15 +70,20 @@ export const statsApi = {
 
   getWeeklyBars: (selectedDate = TODAY) => {
     const events = apiClient.getEvents();
+    const [yStr, mStr] = selectedDate.split('-');
+    const year = parseInt(yStr, 10) || 2026;
+    const month = parseInt(mStr, 10) || 11;
+    const daysInMonth = new Date(year, month, 0).getDate();
+
     const weeks = [
       [1, 7],
       [8, 14],
       [15, 21],
-      [22, 28]
+      [22, daysInMonth]
     ];
 
     const monthPrefix = selectedDate.slice(0, 7);
-    const monthIdx = parseInt(selectedDate.slice(5, 7), 10) - 1;
+    const monthIdx = month - 1;
     const monthName = ['yan', 'fev', 'mar', 'apr', 'may', 'iyun', 'iyul', 'avg', 'sen', 'okt', 'noy', 'dek'][monthIdx] || 'noy';
 
     const data = weeks.map(([a, b]) => {
@@ -87,32 +105,69 @@ export const statsApi = {
     return { data, totalRegistered };
   },
 
-  getDonutData: (selectedDate = TODAY) => {
+  getDonutData: (
+    selectedDate = TODAY,
+    selectedPreset: 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'year' | 'custom' = 'month',
+    startDate?: string,
+    endDate?: string,
+    forceAllTime = false
+  ) => {
     const events = apiClient.getEvents();
+    const [yStr, mStr] = selectedDate.split('-');
+    const year = parseInt(yStr, 10) || 2026;
+    const month = parseInt(mStr, 10) || 11;
     const monthPrefix = selectedDate.slice(0, 7);
-    const monthEvents = events.filter(e => e.date.slice(0, 7) === monthPrefix);
-    const pool = monthEvents.length > 0 ? monthEvents : events;
-    const total = pool.length || 1;
+    const monthIdx = month - 1;
+    const monthNameUz = MN[monthIdx] ? MN[monthIdx][0].toUpperCase() + MN[monthIdx].slice(1) : '';
+
+    let pool: typeof events = [];
+    let isDayView = false;
+    let periodLabel = '';
+
+    if (forceAllTime || selectedPreset === 'all') {
+      // Platforma ishga tushgandan beri jami tadbirlar
+      pool = events;
+      isDayView = false;
+      periodLabel = 'Platforma ishga tushgandan beri';
+    } else if (selectedPreset === 'month') {
+      // Butun oy bo'yicha umumiy ko'rsatish
+      pool = events.filter(e => e.date.slice(0, 7) === monthPrefix);
+      isDayView = false;
+      periodLabel = `${monthNameUz} oyi`;
+    } else if (selectedPreset === 'year') {
+      // Butun yil bo'yicha umumiy ko'rsatish
+      pool = events.filter(e => e.date.startsWith(String(year)));
+      isDayView = false;
+      periodLabel = `${year} yil`;
+    } else if (selectedPreset === 'week' && startDate && endDate) {
+      // Hafta oralig'i bo'yicha
+      pool = events.filter(e => e.date >= startDate && e.date <= endDate);
+      isDayView = false;
+      periodLabel = 'Haftalik';
+    } else {
+      // Aniq kun tanlangan holat (kun bosilganda, custom, today, yesterday)
+      pool = events.filter(e => e.date === selectedDate);
+      isDayView = true;
+      periodLabel = `${fd(selectedDate)}`;
+    }
+
+    const total = pool.length;
 
     const items = TYPES.map((name, i) => {
       const count = pool.filter(e => e.t === i).length;
       return {
         name,
         count,
-        color: COL[i],
-        percent: Math.round((count / total) * 100)
+        percent: total > 0 ? Math.round((count / total) * 100) : 0,
+        color: COL[i % COL.length]
       };
     });
 
-    // Foizlar yig'indisi aniq 100% bo'lishini ta'minlash
-    const pSum = items.reduce((s, it) => s + it.percent, 0);
-    if (pSum !== 100 && items.length > 0) {
-      items[0].percent += (100 - pSum);
-    }
-
     return {
-      total: pool.length,
-      items
+      total,
+      items,
+      isDayView,
+      periodLabel
     };
   }
 };

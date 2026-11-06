@@ -1,7 +1,7 @@
 /* ==========================================================================
    YUNUSOBOD — BIRGA: RASMIY TOZA KIRISH SAHIFASI
-   Shahidlar xotirasi va Toshkent teleminorasi 60fps GPU 20s Ping-Pong video
-   Mukammal tiniqlik, 0% lag, toza va aniq kirish formasi (Screenshot 1:1)
+   Shahidlar xotirasi va Toshkent teleminorasi 1080p Full HD 60fps video
+   Jonli yuruvchi odamlar qatlami (Pedestrians engine) va 1:1 toza kirish formasi
    ========================================================================== */
 
 .gov-login-page {
@@ -10,13 +10,13 @@
   width: 100vw;
   display: flex;
   overflow: hidden;
-  background-color: #ffffff;
+  background-color: #0c1829;
   color: #0f172a;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* ==========================================================================
-   1. 60FPS APPARAT TEZLASHUVI BILAN 20s PING-PONG VIDEOFON
+   1. 1080P FULL HD 60FPS APPARAT TEZLASHUVLI VIDEOFON VA JONLI PIYODALAR
    0s - 10s: Oldinga parvoz | 10s - 20s: Orqaga parvoz (Native GPU Loop)
    ========================================================================== */
 
@@ -28,7 +28,7 @@
   height: 100%;
   z-index: 1;
   overflow: hidden;
-  background: #ffffff;
+  background: #0c1829;
 }
 
 .shahidlar-bg-video {
@@ -38,41 +38,57 @@
   object-position: left center;
   display: block;
   opacity: 0;
-  transition: opacity 0.4s ease-in;
+  transition: opacity 0.5s ease-in;
 }
 
 .shahidlar-bg-video.is-loaded {
   opacity: 1;
 }
 
+
+
 /* ==========================================================================
-   2. O'NG TOMONDAGI TOZA VA ANIQ KIRISH KARTASI (1:1 RASMGA MOS)
+   2. O'NG TOMONDAGI TOZA, TINIQ VA ANIQ KIRISH KARTASI (1:1 RASMGA MOS)
    ========================================================================== */
 
 .gov-login-panel-wrapper {
   position: relative;
   margin-left: auto;
-  width: 500px;
+  width: 480px;
   max-width: 100vw;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 48px 60px;
-  background: #ffffff;
+  padding: 48px 56px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.45) 15%,
+    rgba(255, 255, 255, 0.9) 45%,
+    #ffffff 75%,
+    #ffffff 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
-  box-shadow: -24px 0 50px rgba(0, 0, 0, 0.04);
+  box-shadow: -24px 0 50px rgba(0, 0, 0, 0.06);
 }
 
 .gov-login-card {
   width: 100%;
   margin: auto 0;
+  background: #ffffff;
+  padding: 36px 32px;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* Asosiy sarlavha: Tizimga kirish */
 .gov-main-heading {
-  margin: 0 0 30px;
-  font-size: 28px;
+  margin: 0 0 28px;
+  font-size: 27px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.5px;
@@ -87,11 +103,11 @@
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
-  padding: 12px 15px;
+  padding: 12px 14px;
   border-radius: 10px;
   font-size: 13.5px;
   font-weight: 500;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 /* Forma elementlari */
@@ -134,10 +150,10 @@
 
 .gov-input {
   width: 100%;
-  height: 50px;
+  height: 48px;
   padding: 0 44px;
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
+  border-radius: 11px;
+  border: 1.5px solid #cbd5e1;
   background: #ffffff;
   color: #0f172a;
   font-size: 15px;
@@ -224,7 +240,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .gov-remember-wrap {
@@ -355,7 +371,10 @@
 @media (max-width: 900px) {
   .gov-login-panel-wrapper {
     width: 440px;
-    padding: 36px 36px;
+    padding: 32px 28px;
+  }
+  .gov-login-card {
+    padding: 28px 24px;
   }
 }
 
@@ -371,10 +390,19 @@
     max-width: 420px;
     min-height: auto;
     margin: auto;
-    padding: 36px 28px;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .gov-login-card {
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 36px 28px;
     border-radius: 20px;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
   }
 }

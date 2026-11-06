@@ -27,32 +27,42 @@ const typeOf = (i: number) => {
   return r < 38 ? 0 : r < 62 ? 1 : r < 77 ? 2 : r < 89 ? 3 : r < 96 ? 4 : 5;
 };
 
-// Generate initial baseline events
+// Generate initial baseline events strictly up to TODAY (2026-11-05)
+// Dates after TODAY are future dates and have no historical data
+const [curYearToday, curMonthToday, curDayToday] = TODAY.split('-').map(Number);
 const INITIAL_EVENTS: EventItem[] = [];
 let n0 = 1;
-CNT.forEach((c, d) => {
-  for (let k = 0; k < c; k++, n0++) {
-    const t = typeOf(n0 * 7 + d);
-    const p = POOL[t];
-    const day = d + 1;
-    const dateStr = `2026-11-${pad(day <= 30 ? day : 30)}`;
-    const going = 30 + ((n0 * 17) % 170);
-    const rate = 0.60 + ((n0 * 7) % 29) / 100;
-    const came = Math.round(going * rate);
-    INITIAL_EVENTS.push({
-      id: n0,
-      t,
-      title: p[(n0 + d) % p.length],
-      loc: (n0 * 3 + d) % LOCS.length,
-      date: dateStr,
-      time: `${pad(9 + ((k * 2 + d) % 11))}:00`,
-      ages: `${15 + (n0 % 3) * 2}–${25 + (n0 % 2) * 5} yosh`,
-      going,
-      came,
-      desc: DESC[t]
-    });
+
+for (let month = 1; month <= curMonthToday; month++) {
+  const daysInMonth = new Date(curYearToday, month, 0).getDate();
+  const maxDay = (month === curMonthToday) ? curDayToday : daysInMonth;
+  for (let day = 1; day <= maxDay; day++) {
+    const dateStr = `${curYearToday}-${pad(month)}-${pad(day)}`;
+    if (dateStr > TODAY) continue;
+
+    // 1 to 3 events per day with varied categories
+    const count = 1 + ((day * 7 + month * 13) % 3);
+    for (let k = 0; k < count; k++, n0++) {
+      const t = (typeOf(n0 * 7 + day + month) + k * 2) % TYPES.length;
+      const p = POOL[t] || POOL[0];
+      const going = 35 + ((n0 * 19 + month * 7) % 180);
+      const rate = 0.65 + ((n0 * 11 + month * 3) % 25) / 100;
+      const came = Math.round(going * rate);
+      INITIAL_EVENTS.push({
+        id: n0,
+        t,
+        title: p[(n0 + day + month) % p.length],
+        loc: (n0 * 3 + day + month) % LOCS.length,
+        date: dateStr,
+        time: `${pad(9 + ((k * 3 + day + month) % 10))}:00`,
+        ages: `${15 + (n0 % 3) * 2}–${25 + (n0 % 2) * 5} yosh`,
+        going,
+        came,
+        desc: DESC[t]
+      });
+    }
   }
-});
+}
 
 // Generate initial 12,486 users
 const MF = ['Azizbek', 'Dilshodbek', 'Sardor', 'Bekzod', 'Javlonbek', 'Otabek', 'Jasur', 'Sherzod'];

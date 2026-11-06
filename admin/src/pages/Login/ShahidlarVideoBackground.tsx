@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 
 /**
  * ShahidlarVideoBackground
- * Yunusobod tumani: Shahidlar xotirasi me'moriy ansambli va Toshkent teleminorasi
- * 20 soniyalik apparat tezlashuvli (GPU 60fps) mukammal siklli videofon:
- * - 0s - 10s: Oldinga silliq parvoz
- * - 10s - 20s: Orqaga silliq parvoz
- * - O'ng tomondagi barcha sun'iy intellekt xiraliklari yo'qotilgan va toza oq fonga silliq o'tkazilgan
+ * - 1080p Full HD tiniq 20 soniyalik oldinga-orqaga (Ping-Pong) videofon
+ * - Tabiiy, fotorealistik, ortiqcha sun'iy qatlamlarsiz
+ * - Native GPU 60 FPS apparat tezlashuvi
  */
 export const ShahidlarVideoBackground: React.FC = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
